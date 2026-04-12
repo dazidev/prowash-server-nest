@@ -1,0 +1,186 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model admins {
+  id             String    @id
+  name           String
+  lastname       String
+  email          String    @unique
+  password       String
+  role           AdminRole @default(GENERAL_ADMIN)
+  lastConnection DateTime? @db.Timestamptz(6)
+  createdAt      DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt      DateTime  @db.Timestamptz(6)
+}
+
+model advertising {
+  id        String   @id
+  type      AdTypes
+  order     Int      @unique
+  text      String?
+  image1    String?
+  image2    String?
+  image3    String?
+  image4    String?
+  image5    String?
+  video     String?
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @db.Timestamptz(6)
+}
+
+model email_verification_codes {
+  id         String              @id
+  userId     String
+  hashedCode String
+  purpose    VerificationPurpose @default(EMAIL_VERIFY)
+  status     VerificationStatus  @default(PENDING)
+  expiresAt  DateTime            @db.Timestamptz(6)
+  consumedAt DateTime?           @db.Timestamptz(6)
+  createdAt  DateTime            @default(now()) @db.Timestamptz(6)
+  updatedAt  DateTime            @db.Timestamptz(6)
+  users      users               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, hashedCode, purpose])
+  @@index([userId, createdAt])
+  @@index([userId, purpose, status])
+  @@index([userId, status])
+  @@index([userId, status, purpose, hashedCode])
+}
+
+model package_prices {
+  id             String         @id
+  price          Int
+  description    String
+  packageId      String
+  rangeId        String
+  createdAt      DateTime       @default(now()) @db.Timestamptz(6)
+  updatedAt      DateTime       @db.Timestamptz(6)
+  packages       packages       @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  package_ranges package_ranges @relation(fields: [rangeId], references: [id], onDelete: Cascade)
+}
+
+model package_ranges {
+  id             String           @id
+  description    String
+  unit           String
+  createdAt      DateTime         @default(now()) @db.Timestamptz(6)
+  updatedAt      DateTime         @db.Timestamptz(6)
+  package_prices package_prices[]
+}
+
+model package_services {
+  id                   String                 @id
+  name                 String                 @unique
+  createdAt            DateTime               @default(now()) @db.Timestamptz(6)
+  updatedAt            DateTime               @db.Timestamptz(6)
+  services_on_packages services_on_packages[]
+}
+
+model packages {
+  id                   String                 @id
+  name                 String                 @unique
+  createdAt            DateTime               @default(now()) @db.Timestamptz(6)
+  updatedAt            DateTime               @db.Timestamptz(6)
+  package_prices       package_prices[]
+  services_on_packages services_on_packages[]
+}
+
+model reviews {
+  id        String   @id
+  name      String
+  rating    Int
+  comment   String
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+}
+
+model services_on_packages {
+  id               String           @id
+  amount           Int
+  serviceId        String
+  packageId        String
+  createdAt        DateTime         @default(now()) @db.Timestamptz(6)
+  updatedAt        DateTime         @db.Timestamptz(6)
+  packages         packages         @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  package_services package_services @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@unique([serviceId, packageId])
+  @@index([packageId])
+}
+
+model user_houses {
+  id               String   @id
+  name             String
+  street           String
+  complementStreet String?
+  city             String
+  state            String
+  zipcode          String
+  imageUrl         String?
+  userId           String
+  createdAt        DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt        DateTime @db.Timestamptz(6)
+  users            users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, name])
+  @@index([userId])
+}
+
+model users {
+  id                       String                     @id
+  name                     String
+  lastname                 String
+  email                    String                     @unique
+  password                 String
+  phoneNumber              String?                    @db.VarChar(20)
+  isEmailVerified          Boolean                    @default(false)
+  isPhoneNumberVerified    Boolean                    @default(false)
+  role                     UserRole                   @default(USER)
+  status                   UserStatus                 @default(ACTIVE)
+  lastLogin                DateTime?                  @db.Timestamptz(6)
+  createdAt                DateTime                   @default(now()) @db.Timestamptz(6)
+  updatedAt                DateTime                   @db.Timestamptz(6)
+  email_verification_codes email_verification_codes[]
+  user_houses              user_houses[]
+
+  @@index([role])
+  @@index([status])
+}
+
+enum AdTypes {
+  TEXT
+  IMAGE
+  IMAGE_CAROUSEL
+  VIDEO
+}
+
+enum AdminRole {
+  GENERAL_ADMIN
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum VerificationPurpose {
+  EMAIL_VERIFY
+  EMAIL_CHANGE
+}
+
+enum VerificationStatus {
+  PENDING
+  USED
+  EXPIRED
+}
