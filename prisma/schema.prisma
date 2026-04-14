@@ -1,168 +1,13 @@
 generator client {
   provider = "prisma-client"
-  output   = "../generated/prisma"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
 }
 
-model admins {
-  id             String    @id
-  name           String
-  lastname       String
-  email          String    @unique
-  password       String
-  role           AdminRole @default(GENERAL_ADMIN)
-  lastConnection DateTime? @db.Timestamptz(6)
-  createdAt      DateTime  @default(now()) @db.Timestamptz(6)
-  updatedAt      DateTime  @db.Timestamptz(6)
-}
-
-model advertising {
-  id        String   @id
-  type      AdTypes
-  order     Int      @unique
-  text      String?
-  image1    String?
-  image2    String?
-  image3    String?
-  image4    String?
-  image5    String?
-  video     String?
-  createdAt DateTime @default(now()) @db.Timestamptz(6)
-  updatedAt DateTime @db.Timestamptz(6)
-}
-
-model email_verification_codes {
-  id         String              @id
-  userId     String
-  hashedCode String
-  purpose    VerificationPurpose @default(EMAIL_VERIFY)
-  status     VerificationStatus  @default(PENDING)
-  expiresAt  DateTime            @db.Timestamptz(6)
-  consumedAt DateTime?           @db.Timestamptz(6)
-  createdAt  DateTime            @default(now()) @db.Timestamptz(6)
-  updatedAt  DateTime            @db.Timestamptz(6)
-  users      users               @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, hashedCode, purpose])
-  @@index([userId, createdAt])
-  @@index([userId, purpose, status])
-  @@index([userId, status])
-  @@index([userId, status, purpose, hashedCode])
-}
-
-model package_prices {
-  id             String         @id
-  price          Int
-  description    String
-  packageId      String
-  rangeId        String
-  createdAt      DateTime       @default(now()) @db.Timestamptz(6)
-  updatedAt      DateTime       @db.Timestamptz(6)
-  packages       packages       @relation(fields: [packageId], references: [id], onDelete: Cascade)
-  package_ranges package_ranges @relation(fields: [rangeId], references: [id], onDelete: Cascade)
-}
-
-model package_ranges {
-  id             String           @id
-  description    String
-  unit           String
-  createdAt      DateTime         @default(now()) @db.Timestamptz(6)
-  updatedAt      DateTime         @db.Timestamptz(6)
-  package_prices package_prices[]
-}
-
-model package_services {
-  id                   String                 @id
-  name                 String                 @unique
-  createdAt            DateTime               @default(now()) @db.Timestamptz(6)
-  updatedAt            DateTime               @db.Timestamptz(6)
-  services_on_packages services_on_packages[]
-}
-
-model packages {
-  id                   String                 @id
-  name                 String                 @unique
-  createdAt            DateTime               @default(now()) @db.Timestamptz(6)
-  updatedAt            DateTime               @db.Timestamptz(6)
-  package_prices       package_prices[]
-  services_on_packages services_on_packages[]
-}
-
-model reviews {
-  id        String   @id
-  name      String
-  rating    Int
-  comment   String
-  createdAt DateTime @default(now()) @db.Timestamptz(6)
-}
-
-model services_on_packages {
-  id               String           @id
-  amount           Int
-  serviceId        String
-  packageId        String
-  createdAt        DateTime         @default(now()) @db.Timestamptz(6)
-  updatedAt        DateTime         @db.Timestamptz(6)
-  packages         packages         @relation(fields: [packageId], references: [id], onDelete: Cascade)
-  package_services package_services @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-
-  @@unique([serviceId, packageId])
-  @@index([packageId])
-}
-
-model user_houses {
-  id               String   @id
-  name             String
-  street           String
-  complementStreet String?
-  city             String
-  state            String
-  zipcode          String
-  imageUrl         String?
-  userId           String
-  createdAt        DateTime @default(now()) @db.Timestamptz(6)
-  updatedAt        DateTime @db.Timestamptz(6)
-  users            users    @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, name])
-  @@index([userId])
-}
-
-model users {
-  id                       String                     @id
-  name                     String
-  lastname                 String
-  email                    String                     @unique
-  password                 String
-  phoneNumber              String?                    @db.VarChar(20)
-  isEmailVerified          Boolean                    @default(false)
-  isPhoneNumberVerified    Boolean                    @default(false)
-  role                     UserRole                   @default(USER)
-  status                   UserStatus                 @default(ACTIVE)
-  lastLogin                DateTime?                  @db.Timestamptz(6)
-  createdAt                DateTime                   @default(now()) @db.Timestamptz(6)
-  updatedAt                DateTime                   @db.Timestamptz(6)
-  email_verification_codes email_verification_codes[]
-  user_houses              user_houses[]
-
-  @@index([role])
-  @@index([status])
-}
-
-enum AdTypes {
-  TEXT
-  IMAGE
-  IMAGE_CAROUSEL
-  VIDEO
-}
-
-enum AdminRole {
-  GENERAL_ADMIN
-}
-
+//* MODELO PARA LOS USUARIOS DE LA APP MOBILE
 enum UserRole {
   ADMIN
   USER
@@ -174,13 +19,200 @@ enum UserStatus {
   SUSPENDED
 }
 
-enum VerificationPurpose {
-  EMAIL_VERIFY
-  EMAIL_CHANGE
+model User {
+  id                                                     String      @id @default(uuid())
+  name                                                   String
+  lastname                                               String
+  email                                                  String      @unique
+  password                                               String
+  phoneNumber                                            String?     @db.VarChar(20)
+  isEmailVerified                                        Boolean     @default(false)
+  isPhoneNumberVerified                                  Boolean     @default(false)
+  role                                                   UserRole    @default(USER)
+  status                                                 UserStatus  @default(ACTIVE)
+  lastLogin                                              DateTime?   @db.Timestamptz()
+  createdAt                                              DateTime    @default(now()) @db.Timestamptz()
+  updatedAt                                              DateTime    @updatedAt @db.Timestamptz()
+
+  EmailVerificationCodes EmailVerificationCodes[] // 1:N
+  UserHouse              UserHouse[] // 1:N
+
+  @@index([status])
+  @@index([role])
+  @@map("users") // nombre de la tabla
 }
 
+//* MODELOS PARA LOS CÓDIGOS A LOS CORREOS ELECTRONICOS
 enum VerificationStatus {
   PENDING
   USED
   EXPIRED
+}
+
+enum VerificationPurpose {
+  EMAIL_VERIFY // verificar correo
+  EMAIL_CHANGE // cambio de correo
+}
+
+model EmailVerificationCodes {
+  id         String               @id @default(uuid())
+  userId     String
+  user       User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hashedCode String
+
+  // gestión de uso
+  purpose    VerificationPurpose  @default(EMAIL_VERIFY)
+  status     VerificationStatus   @default(PENDING)
+
+  // gestión de vida
+  expiresAt  DateTime             @db.Timestamptz()
+  consumedAt DateTime?            @db.Timestamptz()
+  createdAt  DateTime             @default(now()) @db.Timestamptz()
+  updatedAt  DateTime             @updatedAt @db.Timestamptz()
+
+  @@unique([userId, hashedCode, purpose])
+  @@index([userId, status])
+  @@index([userId, purpose, status])
+  @@index([userId, createdAt])
+  @@index([userId, status, purpose, hashedCode])
+  @@map("email_verification_codes") // nombre de la tabla
+}
+
+//* MODELOS PARA EL SISTEMA DE CASAS
+model UserHouse {
+  id               String    @id @default(uuid())
+  name             String
+  street           String
+  complementStreet String?
+  city             String
+  state            String
+  zipcode          String
+  imageUrl         String?
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt        DateTime  @default(now()) @db.Timestamptz()
+  updatedAt        DateTime  @updatedAt @db.Timestamptz()
+
+  @@unique([userId, name]) // El usuario no podrá tener dos casas con el mismo nombre
+  @@index([userId])
+  @@map("user_houses")
+}
+
+//* MODELOS PARA LOS ADMINISTRADORES
+
+enum AdminRole {
+  GENERAL_ADMIN
+}
+
+model Admin {
+  id             String     @id @default(uuid())
+  name           String
+  lastname       String
+  email          String     @unique
+  password       String
+  role           AdminRole  @default(GENERAL_ADMIN)
+  lastConnection DateTime?  @db.Timestamptz()
+  createdAt      DateTime   @default(now()) @db.Timestamptz()
+  updatedAt      DateTime   @updatedAt @db.Timestamptz()
+
+  @@map("admins")
+}
+
+//* MODELO DE PUBLICIDAD
+
+enum AdTypes {
+  TEXT
+  IMAGE
+  IMAGE_CAROUSEL
+  VIDEO
+}
+
+model Advertising {
+  id        String    @id @default(uuid())
+  type      AdTypes
+  order     Int       @unique
+  text      String?
+  image1    String?
+  image2    String?
+  image3    String?
+  image4    String?
+  image5    String?
+  video     String?
+  createdAt DateTime  @default(now()) @db.Timestamptz()
+  updatedAt DateTime  @updatedAt @db.Timestamptz()
+
+  @@map("advertising")
+}
+
+//* MODELO DE PAQUETES
+
+model PackageService {
+  id               String              @id @default(uuid())
+  name             String              @unique
+  createdAt        DateTime            @default(now()) @db.Timestamptz()
+  updatedAt        DateTime            @updatedAt @db.Timestamptz()
+  ServiceOnPackage ServiceOnPackage[]
+
+  @@map("package_services")
+}
+
+model Package {
+  id               String              @id @default(uuid())
+  name             String              @unique
+  createdAt        DateTime            @default(now()) @db.Timestamptz()
+  updatedAt        DateTime            @updatedAt @db.Timestamptz()
+  ServiceOnPackage ServiceOnPackage[]
+  PackagePrice     PackagePrice[]
+
+  @@map("packages")
+}
+
+model ServiceOnPackage {
+  id        String          @id @default(uuid())
+  amount    Int
+  serviceId String
+  service   PackageService @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  packageId String
+  package   Package        @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  createdAt DateTime        @default(now()) @db.Timestamptz()
+  updatedAt DateTime        @updatedAt @db.Timestamptz()
+
+  @@unique([serviceId, packageId])
+  @@index([packageId])
+  @@map("services_on_packages")
+}
+
+model PackageRange {
+  id           String          @id @default(uuid())
+  description  String
+  unit         String
+  createdAt    DateTime        @default(now()) @db.Timestamptz()
+  updatedAt    DateTime        @updatedAt @db.Timestamptz()
+  PackagePrice PackagePrice[]
+
+  @@map("package_ranges")
+}
+
+model PackagePrice {
+  id          String        @id @default(uuid())
+  price       Int
+  description String
+  packageId   String
+  package     Package      @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  rangeId     String
+  range       PackageRange @relation(fields: [rangeId], references: [id], onDelete: Cascade)
+  createdAt   DateTime      @default(now()) @db.Timestamptz()
+  updatedAt   DateTime      @updatedAt @db.Timestamptz()
+
+  @@map("package_prices")
+}
+
+model Reviews {
+  id        String    @id @default(uuid())
+  name      String
+  rating    Int
+  comment   String
+  createdAt DateTime  @default(now()) @db.Timestamptz()
+
+  @@map("reviews")
 }
