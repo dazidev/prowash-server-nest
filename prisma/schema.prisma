@@ -28,7 +28,7 @@ model User {
   phoneNumber                                            String?     @db.VarChar(20)
   isEmailVerified                                        Boolean     @default(false)
   isPhoneNumberVerified                                  Boolean     @default(false)
-  role                                                   UserRole    @default(USER)
+  roles                                                  UserRole[]
   status                                                 UserStatus  @default(ACTIVE)
   lastLogin                                              DateTime?   @db.Timestamptz()
   createdAt                                              DateTime    @default(now()) @db.Timestamptz()
@@ -38,7 +38,7 @@ model User {
   UserHouse              UserHouse[] // 1:N
 
   @@index([status])
-  @@index([role])
+  @@index([roles])
   @@map("users") // nombre de la tabla
 }
 
