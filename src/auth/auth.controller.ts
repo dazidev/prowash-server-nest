@@ -6,10 +6,19 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
+  SetMetadata,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto, LoginUserDto } from './dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
+import { AuthGuard } from '@nestjs/passport';
+import { GetUser, RawHeaders } from './decorators';
+import { User } from './interfaces/user';
+import { UserRoleGuard } from './guards/user-role.guard';
+import { RoleProtected } from './decorators/role-protected.decorator';
+import { ValidRoles } from './interfaces';
+import { Auth } from './decorators/auth.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -23,6 +32,44 @@ export class AuthController {
   @Post('login')
   loginUser(@Body() loginUserDto: LoginUserDto) {
     return this.authService.login(loginUserDto);
+  }
+
+  @Get('private')
+  @UseGuards(AuthGuard())
+  testingPrivateRoute(
+    // @Req() request: Express.Request,
+    @GetUser() user: User,
+    @GetUser('email') userEmail: string,
+    @RawHeaders() rawHeaders: string[],
+  ) {
+    return {
+      ok: true,
+      message: 'Hola Mundo Private',
+      user,
+      userEmail,
+      rawHeaders,
+    };
+  }
+
+  // @SetMetadata('role', 'USER')
+
+  @Get('private2')
+  @RoleProtected(ValidRoles.user)
+  @UseGuards(AuthGuard(), UserRoleGuard)
+  privateRoute2(@GetUser() user: User) {
+    return {
+      ok: true,
+      user,
+    };
+  }
+
+  @Get('private3')
+  @Auth(ValidRoles.admin)
+  privateRoute3(@GetUser() user: User) {
+    return {
+      ok: true,
+      user,
+    };
   }
 
   @Get()
