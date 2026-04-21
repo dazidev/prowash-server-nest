@@ -52,6 +52,7 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   User: 'User',
+  UserSession: 'UserSession',
   EmailVerificationCodes: 'EmailVerificationCodes',
   UserHouse: 'UserHouse',
   Admin: 'Admin',
@@ -97,6 +98,24 @@ export const UserScalarFieldEnum = {
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+export const UserSessionScalarFieldEnum = {
+  id: 'id',
+  refreshToken: 'refreshToken',
+  expiresAt: 'expiresAt',
+  isRevoked: 'isRevoked',
+  revokedAt: 'revokedAt',
+  revokedReason: 'revokedReason',
+  deviceId: 'deviceId',
+  deviceInfo: 'deviceInfo',
+  ipAddress: 'ipAddress',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  userId: 'userId'
+} as const
+
+export type UserSessionScalarFieldEnum = (typeof UserSessionScalarFieldEnum)[keyof typeof UserSessionScalarFieldEnum]
 
 
 export const EmailVerificationCodesScalarFieldEnum = {

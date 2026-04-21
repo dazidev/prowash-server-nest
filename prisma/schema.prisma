@@ -20,26 +20,50 @@ enum UserStatus {
 }
 
 model User {
-  id                                                     String      @id @default(uuid())
-  name                                                   String
-  lastname                                               String
-  email                                                  String      @unique
-  password                                               String
-  phoneNumber                                            String?     @db.VarChar(20)
-  isEmailVerified                                        Boolean     @default(false)
-  isPhoneNumberVerified                                  Boolean     @default(false)
-  roles                                                  UserRole[]
-  status                                                 UserStatus  @default(ACTIVE)
-  lastLogin                                              DateTime?   @db.Timestamptz()
-  createdAt                                              DateTime    @default(now()) @db.Timestamptz()
-  updatedAt                                              DateTime    @updatedAt @db.Timestamptz()
+  id                     String                    @id @default(uuid())
+  name                   String
+  lastname               String
+  email                  String                    @unique
+  password               String
+  phoneNumber            String?                   @db.VarChar(20)
+  isEmailVerified        Boolean                   @default(false)
+  isPhoneNumberVerified  Boolean                   @default(false)
+  roles                  UserRole[]
+  status                 UserStatus                @default(ACTIVE)
+  lastLogin              DateTime?                 @db.Timestamptz()
+  createdAt              DateTime                  @default(now()) @db.Timestamptz()
+  updatedAt              DateTime                  @updatedAt @db.Timestamptz()
 
-  EmailVerificationCodes EmailVerificationCodes[] // 1:N
-  UserHouse              UserHouse[] // 1:N
+  EmailVerificationCodes EmailVerificationCodes[]
+  UserHouse              UserHouse[]
+  userSessions           UserSession[]
 
   @@index([status])
   @@index([roles])
   @@map("users") // nombre de la tabla
+
+}
+
+model UserSession {
+  id            String     @default(uuid()) @id
+  refreshToken  String
+  expiresAt     DateTime   @db.Timestamptz()
+  isRevoked     Boolean    @default(false)
+  revokedAt     DateTime?  @db.Timestamptz()
+  revokedReason String?
+  deviceId      String
+  deviceInfo    String
+  ipAddress     String
+  createdAt     DateTime   @default(now()) @db.Timestamptz()
+  updatedAt     DateTime   @updatedAt @db.Timestamptz()
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([refreshToken])
+  @@index([userId, isRevoked])
+  @@index([userId, id])
+  @@index([isRevoked, expiresAt])
+  @@map("user_sessions")
 }
 
 //* MODELOS PARA LOS CÓDIGOS A LOS CORREOS ELECTRONICOS

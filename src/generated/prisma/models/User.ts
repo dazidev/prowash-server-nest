@@ -244,6 +244,7 @@ export type UserWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   EmailVerificationCodes?: Prisma.EmailVerificationCodesListRelationFilter
   UserHouse?: Prisma.UserHouseListRelationFilter
+  userSessions?: Prisma.UserSessionListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -262,6 +263,7 @@ export type UserOrderByWithRelationInput = {
   updatedAt?: Prisma.SortOrder
   EmailVerificationCodes?: Prisma.EmailVerificationCodesOrderByRelationAggregateInput
   UserHouse?: Prisma.UserHouseOrderByRelationAggregateInput
+  userSessions?: Prisma.UserSessionOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -283,6 +285,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   EmailVerificationCodes?: Prisma.EmailVerificationCodesListRelationFilter
   UserHouse?: Prisma.UserHouseListRelationFilter
+  userSessions?: Prisma.UserSessionListRelationFilter
 }, "id" | "email">
 
 export type UserOrderByWithAggregationInput = {
@@ -339,6 +342,7 @@ export type UserCreateInput = {
   updatedAt?: Date | string
   EmailVerificationCodes?: Prisma.EmailVerificationCodesCreateNestedManyWithoutUserInput
   UserHouse?: Prisma.UserHouseCreateNestedManyWithoutUserInput
+  userSessions?: Prisma.UserSessionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -357,6 +361,7 @@ export type UserUncheckedCreateInput = {
   updatedAt?: Date | string
   EmailVerificationCodes?: Prisma.EmailVerificationCodesUncheckedCreateNestedManyWithoutUserInput
   UserHouse?: Prisma.UserHouseUncheckedCreateNestedManyWithoutUserInput
+  userSessions?: Prisma.UserSessionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserUpdateInput = {
@@ -375,6 +380,7 @@ export type UserUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   EmailVerificationCodes?: Prisma.EmailVerificationCodesUpdateManyWithoutUserNestedInput
   UserHouse?: Prisma.UserHouseUpdateManyWithoutUserNestedInput
+  userSessions?: Prisma.UserSessionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -393,6 +399,7 @@ export type UserUncheckedUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   EmailVerificationCodes?: Prisma.EmailVerificationCodesUncheckedUpdateManyWithoutUserNestedInput
   UserHouse?: Prisma.UserHouseUncheckedUpdateManyWithoutUserNestedInput
+  userSessions?: Prisma.UserSessionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -535,6 +542,20 @@ export type DateTimeFieldUpdateOperationsInput = {
   set?: Date | string
 }
 
+export type UserCreateNestedOneWithoutUserSessionsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutUserSessionsInput, Prisma.UserUncheckedCreateWithoutUserSessionsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutUserSessionsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutUserSessionsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutUserSessionsInput, Prisma.UserUncheckedCreateWithoutUserSessionsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutUserSessionsInput
+  upsert?: Prisma.UserUpsertWithoutUserSessionsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutUserSessionsInput, Prisma.UserUpdateWithoutUserSessionsInput>, Prisma.UserUncheckedUpdateWithoutUserSessionsInput>
+}
+
 export type UserCreateNestedOneWithoutEmailVerificationCodesInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutEmailVerificationCodesInput, Prisma.UserUncheckedCreateWithoutEmailVerificationCodesInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutEmailVerificationCodesInput
@@ -563,6 +584,94 @@ export type UserUpdateOneRequiredWithoutUserHouseNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutUserHouseInput, Prisma.UserUpdateWithoutUserHouseInput>, Prisma.UserUncheckedUpdateWithoutUserHouseInput>
 }
 
+export type UserCreateWithoutUserSessionsInput = {
+  id?: string
+  name: string
+  lastname: string
+  email: string
+  password: string
+  phoneNumber?: string | null
+  isEmailVerified?: boolean
+  isPhoneNumberVerified?: boolean
+  roles?: Prisma.UserCreaterolesInput | $Enums.UserRole[]
+  status?: $Enums.UserStatus
+  lastLogin?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  EmailVerificationCodes?: Prisma.EmailVerificationCodesCreateNestedManyWithoutUserInput
+  UserHouse?: Prisma.UserHouseCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutUserSessionsInput = {
+  id?: string
+  name: string
+  lastname: string
+  email: string
+  password: string
+  phoneNumber?: string | null
+  isEmailVerified?: boolean
+  isPhoneNumberVerified?: boolean
+  roles?: Prisma.UserCreaterolesInput | $Enums.UserRole[]
+  status?: $Enums.UserStatus
+  lastLogin?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  EmailVerificationCodes?: Prisma.EmailVerificationCodesUncheckedCreateNestedManyWithoutUserInput
+  UserHouse?: Prisma.UserHouseUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutUserSessionsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutUserSessionsInput, Prisma.UserUncheckedCreateWithoutUserSessionsInput>
+}
+
+export type UserUpsertWithoutUserSessionsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutUserSessionsInput, Prisma.UserUncheckedUpdateWithoutUserSessionsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutUserSessionsInput, Prisma.UserUncheckedCreateWithoutUserSessionsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutUserSessionsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutUserSessionsInput, Prisma.UserUncheckedUpdateWithoutUserSessionsInput>
+}
+
+export type UserUpdateWithoutUserSessionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  lastname?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isPhoneNumberVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  roles?: Prisma.UserUpdaterolesInput | $Enums.UserRole[]
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  lastLogin?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  EmailVerificationCodes?: Prisma.EmailVerificationCodesUpdateManyWithoutUserNestedInput
+  UserHouse?: Prisma.UserHouseUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutUserSessionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  lastname?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isPhoneNumberVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  roles?: Prisma.UserUpdaterolesInput | $Enums.UserRole[]
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  lastLogin?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  EmailVerificationCodes?: Prisma.EmailVerificationCodesUncheckedUpdateManyWithoutUserNestedInput
+  UserHouse?: Prisma.UserHouseUncheckedUpdateManyWithoutUserNestedInput
+}
+
 export type UserCreateWithoutEmailVerificationCodesInput = {
   id?: string
   name: string
@@ -578,6 +687,7 @@ export type UserCreateWithoutEmailVerificationCodesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   UserHouse?: Prisma.UserHouseCreateNestedManyWithoutUserInput
+  userSessions?: Prisma.UserSessionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutEmailVerificationCodesInput = {
@@ -595,6 +705,7 @@ export type UserUncheckedCreateWithoutEmailVerificationCodesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   UserHouse?: Prisma.UserHouseUncheckedCreateNestedManyWithoutUserInput
+  userSessions?: Prisma.UserSessionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutEmailVerificationCodesInput = {
@@ -628,6 +739,7 @@ export type UserUpdateWithoutEmailVerificationCodesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   UserHouse?: Prisma.UserHouseUpdateManyWithoutUserNestedInput
+  userSessions?: Prisma.UserSessionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutEmailVerificationCodesInput = {
@@ -645,6 +757,7 @@ export type UserUncheckedUpdateWithoutEmailVerificationCodesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   UserHouse?: Prisma.UserHouseUncheckedUpdateManyWithoutUserNestedInput
+  userSessions?: Prisma.UserSessionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutUserHouseInput = {
@@ -662,6 +775,7 @@ export type UserCreateWithoutUserHouseInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   EmailVerificationCodes?: Prisma.EmailVerificationCodesCreateNestedManyWithoutUserInput
+  userSessions?: Prisma.UserSessionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutUserHouseInput = {
@@ -679,6 +793,7 @@ export type UserUncheckedCreateWithoutUserHouseInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   EmailVerificationCodes?: Prisma.EmailVerificationCodesUncheckedCreateNestedManyWithoutUserInput
+  userSessions?: Prisma.UserSessionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutUserHouseInput = {
@@ -712,6 +827,7 @@ export type UserUpdateWithoutUserHouseInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   EmailVerificationCodes?: Prisma.EmailVerificationCodesUpdateManyWithoutUserNestedInput
+  userSessions?: Prisma.UserSessionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutUserHouseInput = {
@@ -729,6 +845,7 @@ export type UserUncheckedUpdateWithoutUserHouseInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   EmailVerificationCodes?: Prisma.EmailVerificationCodesUncheckedUpdateManyWithoutUserNestedInput
+  userSessions?: Prisma.UserSessionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 
@@ -739,11 +856,13 @@ export type UserUncheckedUpdateWithoutUserHouseInput = {
 export type UserCountOutputType = {
   EmailVerificationCodes: number
   UserHouse: number
+  userSessions: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   EmailVerificationCodes?: boolean | UserCountOutputTypeCountEmailVerificationCodesArgs
   UserHouse?: boolean | UserCountOutputTypeCountUserHouseArgs
+  userSessions?: boolean | UserCountOutputTypeCountUserSessionsArgs
 }
 
 /**
@@ -770,6 +889,13 @@ export type UserCountOutputTypeCountUserHouseArgs<ExtArgs extends runtime.Types.
   where?: Prisma.UserHouseWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountUserSessionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.UserSessionWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -787,6 +913,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   updatedAt?: boolean
   EmailVerificationCodes?: boolean | Prisma.User$EmailVerificationCodesArgs<ExtArgs>
   UserHouse?: boolean | Prisma.User$UserHouseArgs<ExtArgs>
+  userSessions?: boolean | Prisma.User$userSessionsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -842,6 +969,7 @@ export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = run
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   EmailVerificationCodes?: boolean | Prisma.User$EmailVerificationCodesArgs<ExtArgs>
   UserHouse?: boolean | Prisma.User$UserHouseArgs<ExtArgs>
+  userSessions?: boolean | Prisma.User$userSessionsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -852,6 +980,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   objects: {
     EmailVerificationCodes: Prisma.$EmailVerificationCodesPayload<ExtArgs>[]
     UserHouse: Prisma.$UserHousePayload<ExtArgs>[]
+    userSessions: Prisma.$UserSessionPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1263,6 +1392,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   readonly [Symbol.toStringTag]: "PrismaPromise"
   EmailVerificationCodes<T extends Prisma.User$EmailVerificationCodesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$EmailVerificationCodesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EmailVerificationCodesPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   UserHouse<T extends Prisma.User$UserHouseArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$UserHouseArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserHousePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  userSessions<T extends Prisma.User$userSessionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$userSessionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserSessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1743,6 +1873,30 @@ export type User$UserHouseArgs<ExtArgs extends runtime.Types.Extensions.Internal
   take?: number
   skip?: number
   distinct?: Prisma.UserHouseScalarFieldEnum | Prisma.UserHouseScalarFieldEnum[]
+}
+
+/**
+ * User.userSessions
+ */
+export type User$userSessionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the UserSession
+   */
+  select?: Prisma.UserSessionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the UserSession
+   */
+  omit?: Prisma.UserSessionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserSessionInclude<ExtArgs> | null
+  where?: Prisma.UserSessionWhereInput
+  orderBy?: Prisma.UserSessionOrderByWithRelationInput | Prisma.UserSessionOrderByWithRelationInput[]
+  cursor?: Prisma.UserSessionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.UserSessionScalarFieldEnum | Prisma.UserSessionScalarFieldEnum[]
 }
 
 /**
