@@ -31,11 +31,6 @@ export class JwtRefreshStrategy extends PassportStrategy(
     //! TODO: wrap in a try cath
     const { userId, sessionId } = payload;
     const token = req.cookies?.refresh_token;
-    // console.log('cookies:', req.cookies);
-
-    // console.log('cookie: ' + token);
-    // console.log('userid: ' + userId);
-    // console.log('headers:', req.headers);
 
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
 
