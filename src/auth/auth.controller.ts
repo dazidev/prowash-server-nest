@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   SetMetadata,
+  Res,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto, LoginUserDto } from './dto';
@@ -17,8 +18,9 @@ import { GetUser, RawHeaders } from './decorators';
 import { User } from './interfaces/user';
 import { UserRoleGuard } from './guards/user-role.guard';
 import { RoleProtected } from './decorators/role-protected.decorator';
-import { ValidRoles } from './interfaces';
+import { AuthStrategy, ValidRoles } from './interfaces';
 import { Auth } from './decorators/auth.decorator';
+import { Response } from 'express';
 
 @Controller('auth')
 export class AuthController {
@@ -30,8 +32,62 @@ export class AuthController {
   }
 
   @Post('login')
-  loginUser(@Body() loginUserDto: LoginUserDto) {
-    return this.authService.login(loginUserDto);
+  async loginUser(
+    @Body() loginUserDto: LoginUserDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const { user, accessToken, refreshToken } =
+      await this.authService.login(loginUserDto);
+
+    res.cookie('refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: false, //! true in production
+      sameSite: 'lax', //! strict in production
+      path: '/api/auth',
+    });
+
+    return {
+      ...user,
+      accessToken,
+    };
+  }
+
+  @Post('logout')
+  @UseGuards(AuthGuard(AuthStrategy.REFRESH))
+  async logoutUser(
+    @GetUser() user: User,
+    @GetUser('sessionId') sessionId: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    await this.authService.logout(user, sessionId);
+    res.clearCookie('refresh_token', {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'lax',
+      path: '/api/auth',
+    });
+  }
+
+  @Get('refresh')
+  @UseGuards(AuthGuard(AuthStrategy.REFRESH))
+  async getRefreshToken(
+    @GetUser() user: User,
+    @GetUser('sessionId') sessionId: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const { accessToken, refreshToken } =
+      await this.authService.getRefreshToken(user, sessionId);
+
+    res.cookie('refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: false, //! true in production
+      sameSite: 'lax', //! strict in production
+      path: '/api/auth/refresh',
+    });
+
+    return {
+      accessToken,
+    };
   }
 
   @Get('private')

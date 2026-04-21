@@ -12,6 +12,7 @@ export interface User {
   isPhoneNumberVerified: boolean;
   roles: UserRole[];
   status: UserStatus;
+  sessionId?: string;
   lastLogin: Date | null;
   createdAt: Date;
   updatedAt: Date;

@@ -1,3 +1,8 @@
-export interface JwtPayload {
+export interface JwtAccessPayload {
   id: string;
+}
+
+export interface JwtRefreshPayload {
+  userId: string;
+  sessionId: string;
 }
