@@ -2,30 +2,26 @@ import {
   ExceptionFilter,
   Catch,
   ArgumentsHost,
-  BadRequestException,
-  InternalServerErrorException,
+  HttpStatus,
 } from '@nestjs/common';
 import { Prisma } from 'src/generated/prisma/client';
 
-@Catch()
+@Catch(Prisma.PrismaClientKnownRequestError)
 export class PrismaExceptionFilter implements ExceptionFilter {
-  catch(error: unknown, host: ArgumentsHost) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === 'P2002') {
-        const target = error.meta?.target;
+  catch(error: Prisma.PrismaClientKnownRequestError, host: ArgumentsHost) {
+    const ctx = host.switchToHttp();
+    const response = ctx.getResponse();
 
-        if (Array.isArray(target) && target.includes('email')) {
-          throw new BadRequestException('Email already registered');
-        }
-
-        throw new BadRequestException('Unique constraint failed');
-      }
+    if (error.code === 'P2002') {
+      return response.status(HttpStatus.BAD_REQUEST).json({
+        message: 'Email already registered',
+        statusCode: 400,
+      });
     }
 
-    if (error instanceof Error) {
-      throw new BadRequestException(error.message);
-    }
-
-    throw new InternalServerErrorException('Unknown error');
+    return response.status(HttpStatus.BAD_REQUEST).json({
+      message: 'Database error',
+      statusCode: 400,
+    });
   }
 }
