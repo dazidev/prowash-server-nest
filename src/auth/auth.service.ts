@@ -51,7 +51,7 @@ export class AuthService {
     }
   }
 
-  async login(loginUserDto: LoginUserDto, ip: string) {
+  async loginWeb(loginUserDto: LoginUserDto, ip: string) {
     try {
       const { email, password: pass, deviceId, deviceInfo } = loginUserDto;
 
@@ -115,7 +115,7 @@ export class AuthService {
     }
   }
 
-  async logout(user: User, sessionId: string) {
+  async logoutWeb(user: User, sessionId: string) {
     try {
       const session = await this.prisma.userSession.findUnique({
         where: { id: sessionId },
@@ -138,7 +138,7 @@ export class AuthService {
     }
   }
 
-  async getRefreshToken(
+  async getRefreshTokenWeb(
     user: User,
     sessionId: string,
     refreshWebDto: RefreshWebDto,

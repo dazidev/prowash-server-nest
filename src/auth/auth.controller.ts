@@ -32,19 +32,19 @@ export class AuthController {
     return this.authService.create(createUserDto);
   }
 
-  @Post('login')
+  @Post('login-web')
   async loginUser(@Body() loginUserDto: LoginUserDto, @GetRealIP() ip: string) {
-    return await this.authService.login(loginUserDto, ip);
+    return await this.authService.loginWeb(loginUserDto, ip);
   }
 
-  @Post('logout')
+  @Post('logout-web')
   @UseGuards(AuthGuard(AuthStrategy.REFRESH))
   @HttpCode(HttpStatus.OK)
   async logoutUser(
     @GetUser() user: User,
     @GetUser('sessionId') sessionId: string,
   ) {
-    return await this.authService.logout(user, sessionId);
+    return await this.authService.logoutWeb(user, sessionId);
   }
 
   @Post('refresh-web')
@@ -54,7 +54,7 @@ export class AuthController {
     @GetUser('sessionId') sessionId: string,
     @Body() refreshWebDto: RefreshWebDto,
   ) {
-    return this.authService.getRefreshToken(user, sessionId, refreshWebDto);
+    return this.authService.getRefreshTokenWeb(user, sessionId, refreshWebDto);
   }
 
   @Get('check-status')
