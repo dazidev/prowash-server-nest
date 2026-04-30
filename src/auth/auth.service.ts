@@ -12,6 +12,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { Prisma } from 'src/generated/prisma/client';
 import { JwtAccessPayload, JwtRefreshPayload, User } from './interfaces';
+import { RefreshWebDto } from './dto/refresh-web.dto';
 
 @Injectable()
 export class AuthService {
@@ -50,15 +51,9 @@ export class AuthService {
     }
   }
 
-  async login(loginUserDto: LoginUserDto) {
+  async login(loginUserDto: LoginUserDto, ip: string) {
     try {
-      const {
-        email,
-        password: pass,
-        deviceId,
-        deviceInfo,
-        ipAddress,
-      } = loginUserDto;
+      const { email, password: pass, deviceId, deviceInfo } = loginUserDto;
 
       const user = await this.prisma.user.findUnique({
         where: { email },
@@ -69,18 +64,22 @@ export class AuthService {
       if (!bcrypt.compareSync(pass, user.password))
         throw new Error('Credentials are not valid');
 
-      const timeExpires = parseInt(
-        this.configService.get('TIME_REFRESH_TOKEN') ?? '7d',
-      );
-      const expiresAt = new Date(
-        Date.now() + 1000 * 60 * 60 * 24 * timeExpires,
-      );
+      const accessTokenExpiresIn =
+        parseInt(this.configService.get('TIME_ACCESS_TOKEN') ?? '20m') * 60; // SECONDS
+
+      const refreshTokenExpiresIn =
+        parseInt(this.configService.get('TIME_REFRESH_TOKEN') ?? '7d') *
+        60 *
+        60 *
+        24; // SECONDS
+
+      const expiresAt = new Date(Date.now() + 1000 * refreshTokenExpiresIn);
 
       const initialSession = await this.prisma.userSession.create({
         data: {
           deviceId,
           deviceInfo,
-          ipAddress,
+          ipAddress: ip,
           userId: user.id,
           refreshToken: '',
           expiresAt,
@@ -108,6 +107,8 @@ export class AuthService {
         user: { ...result },
         accessToken: this.generateJwtAccessToken({ id: user.id }),
         refreshToken,
+        accessTokenExpiresIn,
+        refreshTokenExpiresIn,
       };
     } catch (error) {
       this.handleDBErrors(error);
@@ -137,14 +138,22 @@ export class AuthService {
     }
   }
 
-  async getRefreshToken(user: User, sessionId: string) {
+  async getRefreshToken(
+    user: User,
+    sessionId: string,
+    refreshWebDto: RefreshWebDto,
+  ) {
     try {
-      const timeExpires = parseInt(
-        this.configService.get('TIME_REFRESH_TOKEN') ?? '7d',
-      );
-      const expiresAt = new Date(
-        Date.now() + 1000 * 60 * 60 * 24 * timeExpires,
-      );
+      const accessTokenExpiresIn =
+        parseInt(this.configService.get('TIME_ACCESS_TOKEN') ?? '20m') * 60; // SECONDS
+
+      const refreshTokenExpiresIn =
+        parseInt(this.configService.get('TIME_REFRESH_TOKEN') ?? '7d') *
+        60 *
+        60 *
+        24; // SECONDS
+
+      const expiresAt = new Date(Date.now() + 1000 * refreshTokenExpiresIn);
 
       const refreshToken = this.generateJwtRefreshToken({
         userId: user.id,
@@ -165,6 +174,8 @@ export class AuthService {
       return {
         accessToken,
         refreshToken,
+        accessTokenExpiresIn,
+        refreshTokenExpiresIn,
       };
     } catch (error) {
       this.handleDBErrors(error);
@@ -195,7 +206,7 @@ export class AuthService {
   private generateJwtRefreshToken(payload: JwtRefreshPayload) {
     const token = this.jwtService.sign(payload, {
       secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
-      expiresIn: '7d',
+      expiresIn: this.configService.get('TIME_REFRESH_TOKEN') ?? '7d',
     });
     return token;
   }

@@ -23,11 +23,11 @@ import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
       useFactory: (configService: ConfigService) => {
         return {
           secret: configService.get('JWT_ACCESS_SECRET'),
-          signOptions: { expiresIn: configService.get('TIME_REFRESH_TOKEN') },
+          signOptions: { expiresIn: configService.get('TIME_ACCESS_TOKEN') },
         };
       },
     }),
   ],
-  exports: [JwtAccessStrategy, PassportModule, JwtModule],
+  exports: [JwtAccessStrategy, PassportModule, JwtModule, AuthModule],
 })
 export class AuthModule {}

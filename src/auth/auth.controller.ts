@@ -7,14 +7,15 @@ import {
   Param,
   Delete,
   UseGuards,
-  SetMetadata,
   Res,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { CreateUserDto, LoginUserDto } from './dto';
+import { CreateUserDto, LoginUserDto, RefreshWebDto } from './dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
 import { AuthGuard } from '@nestjs/passport';
-import { GetUser, RawHeaders } from './decorators';
+import { GetRealIP, GetUser, RawHeaders } from './decorators';
 import { User } from './interfaces/user';
 import { UserRoleGuard } from './guards/user-role.guard';
 import { RoleProtected } from './decorators/role-protected.decorator';
@@ -32,62 +33,34 @@ export class AuthController {
   }
 
   @Post('login')
-  async loginUser(
-    @Body() loginUserDto: LoginUserDto,
-    @Res({ passthrough: true }) res: Response,
-  ) {
-    const { user, accessToken, refreshToken } =
-      await this.authService.login(loginUserDto);
-
-    res.cookie('refresh_token', refreshToken, {
-      httpOnly: true,
-      secure: false, //! true in production
-      sameSite: 'lax', //! strict in production
-      path: '/api/auth',
-    });
-
-    return {
-      ...user,
-      accessToken,
-    };
+  async loginUser(@Body() loginUserDto: LoginUserDto, @GetRealIP() ip: string) {
+    return await this.authService.login(loginUserDto, ip);
   }
 
   @Post('logout')
   @UseGuards(AuthGuard(AuthStrategy.REFRESH))
+  @HttpCode(HttpStatus.OK)
   async logoutUser(
     @GetUser() user: User,
     @GetUser('sessionId') sessionId: string,
-    @Res({ passthrough: true }) res: Response,
   ) {
-    await this.authService.logout(user, sessionId);
-    res.clearCookie('refresh_token', {
-      httpOnly: true,
-      secure: false,
-      sameSite: 'lax',
-      path: '/api/auth',
-    });
+    return await this.authService.logout(user, sessionId);
   }
 
-  @Get('refresh')
+  @Post('refresh-web')
   @UseGuards(AuthGuard(AuthStrategy.REFRESH))
   async getRefreshToken(
     @GetUser() user: User,
     @GetUser('sessionId') sessionId: string,
-    @Res({ passthrough: true }) res: Response,
+    @Body() refreshWebDto: RefreshWebDto,
   ) {
-    const { accessToken, refreshToken } =
-      await this.authService.getRefreshToken(user, sessionId);
+    return this.authService.getRefreshToken(user, sessionId, refreshWebDto);
+  }
 
-    res.cookie('refresh_token', refreshToken, {
-      httpOnly: true,
-      secure: false, //! true in production
-      sameSite: 'lax', //! strict in production
-      path: '/api/auth/refresh',
-    });
-
-    return {
-      accessToken,
-    };
+  @Get('check-status')
+  @Auth()
+  checkStatus(@GetUser() user: User) {
+    return user;
   }
 
   @Get('private')

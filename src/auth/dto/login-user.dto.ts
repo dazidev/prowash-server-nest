@@ -1,4 +1,4 @@
-import { IsEmail, IsIP, IsString, IsUUID, MinLength } from 'class-validator';
+import { IsEmail, IsString, IsUUID, MinLength } from 'class-validator';
 
 export class LoginUserDto {
   @IsEmail()
@@ -14,7 +14,4 @@ export class LoginUserDto {
   @IsString()
   @MinLength(3)
   readonly deviceInfo!: string;
-
-  @IsIP()
-  readonly ipAddress!: string;
 }
