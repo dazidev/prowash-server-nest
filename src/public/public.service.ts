@@ -18,9 +18,7 @@ export class PublicService {
 
       if (!reviews) throw new Error('Reviews not found');
 
-      return {
-        reviews,
-      };
+      return reviews;
     } catch (error) {
       this.handleDBErrors(error);
     }

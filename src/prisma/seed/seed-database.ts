@@ -15,10 +15,14 @@ async function main() {
   await prisma.reviews.deleteMany();
   await prisma.user.deleteMany();
 
-  const { reviews } = initialData;
+  const { reviews, users } = initialData;
 
   await prisma.reviews.createMany({
     data: reviews,
+  });
+
+  await prisma.user.createMany({
+    data: users,
   });
 
   console.log('DB sync successful!');
