@@ -109,6 +109,7 @@ export class AuthService {
         refreshToken,
         accessTokenExpiresIn,
         refreshTokenExpiresIn,
+        sessionId: session.id,
       };
     } catch (error) {
       this.handleDBErrors(error);
