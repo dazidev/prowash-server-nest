@@ -62,7 +62,8 @@ export const ModelName = {
   ServiceOnPackage: 'ServiceOnPackage',
   PackageRange: 'PackageRange',
   PackagePrice: 'PackagePrice',
-  Reviews: 'Reviews'
+  Review: 'Review',
+  Contact: 'Contact'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -239,7 +240,7 @@ export const PackagePriceScalarFieldEnum = {
 export type PackagePriceScalarFieldEnum = (typeof PackagePriceScalarFieldEnum)[keyof typeof PackagePriceScalarFieldEnum]
 
 
-export const ReviewsScalarFieldEnum = {
+export const ReviewScalarFieldEnum = {
   id: 'id',
   name: 'name',
   rating: 'rating',
@@ -247,7 +248,22 @@ export const ReviewsScalarFieldEnum = {
   createdAt: 'createdAt'
 } as const
 
-export type ReviewsScalarFieldEnum = (typeof ReviewsScalarFieldEnum)[keyof typeof ReviewsScalarFieldEnum]
+export type ReviewScalarFieldEnum = (typeof ReviewScalarFieldEnum)[keyof typeof ReviewScalarFieldEnum]
+
+
+export const ContactScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  lastname: 'lastname',
+  zipcode: 'zipcode',
+  phone: 'phone',
+  comments: 'comments',
+  status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ContactScalarFieldEnum = (typeof ContactScalarFieldEnum)[keyof typeof ContactScalarFieldEnum]
 
 
 export const SortOrder = {

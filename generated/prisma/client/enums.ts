@@ -58,3 +58,11 @@ export const AdTypes = {
 } as const
 
 export type AdTypes = (typeof AdTypes)[keyof typeof AdTypes]
+
+
+export const ContactStatus = {
+  ATTENDED: 'ATTENDED',
+  NOT_ATTENDED: 'NOT_ATTENDED'
+} as const
+
+export type ContactStatus = (typeof ContactStatus)[keyof typeof ContactStatus]

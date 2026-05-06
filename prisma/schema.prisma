@@ -231,7 +231,7 @@ model PackagePrice {
   @@map("package_prices")
 }
 
-model Reviews {
+model Review {
   id        String    @id @default(uuid())
   name      String
   rating    Int
@@ -239,4 +239,23 @@ model Reviews {
   createdAt DateTime  @default(now()) @db.Timestamptz()
 
   @@map("reviews")
+}
+
+enum ContactStatus {
+  ATTENDED
+  NOT_ATTENDED
+}
+
+model Contact {
+  id        String         @id @default(uuid())
+  name      String
+  lastname  String?
+  zipcode   Int?
+  phone     Int
+  comments  String
+  status    ContactStatus
+  createdAt DateTime       @default(now()) @db.Timestamptz()
+  updatedAt DateTime       @updatedAt @db.Timestamptz()
+
+  @@map("contacts")
 }

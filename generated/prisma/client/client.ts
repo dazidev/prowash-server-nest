@@ -95,7 +95,12 @@ export type PackageRange = Prisma.PackageRangeModel
  */
 export type PackagePrice = Prisma.PackagePriceModel
 /**
- * Model Reviews
+ * Model Review
  * 
  */
-export type Reviews = Prisma.ReviewsModel
+export type Review = Prisma.ReviewModel
+/**
+ * Model Contact
+ * 
+ */
+export type Contact = Prisma.ContactModel
