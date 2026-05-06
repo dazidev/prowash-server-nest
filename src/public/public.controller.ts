@@ -19,29 +19,4 @@ export class PublicController {
   getReviews() {
     return this.publicService.getReviews();
   }
-
-  @Post()
-  create(@Body() createPublicDto: CreatePublicDto) {
-    return this.publicService.create(createPublicDto);
-  }
-
-  @Get()
-  findAll() {
-    return this.publicService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.publicService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updatePublicDto: UpdatePublicDto) {
-    return this.publicService.update(+id, updatePublicDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.publicService.remove(+id);
-  }
 }

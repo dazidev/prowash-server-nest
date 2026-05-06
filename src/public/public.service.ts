@@ -3,10 +3,8 @@ import {
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { CreatePublicDto } from './dto/create-public.dto';
-import { UpdatePublicDto } from './dto/update-public.dto';
+import { Prisma } from 'generated/prisma/client/client';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { Prisma } from 'src/generated/prisma/client';
 
 @Injectable()
 export class PublicService {
@@ -14,7 +12,7 @@ export class PublicService {
 
   async getReviews() {
     try {
-      const reviews = await this.prisma.reviews.findMany();
+      const reviews = await this.prisma.review.findMany();
 
       if (!reviews) throw new Error('Reviews not found');
 
@@ -40,25 +38,5 @@ export class PublicService {
       throw new BadRequestException(error.message);
     }
     throw new InternalServerErrorException('Unknown error');
-  }
-
-  create(createPublicDto: CreatePublicDto) {
-    return 'This action adds a new public';
-  }
-
-  findAll() {
-    return `This action returns all public`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} public`;
-  }
-
-  update(id: number, updatePublicDto: UpdatePublicDto) {
-    return `This action updates a #${id} public`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} public`;
   }
 }
