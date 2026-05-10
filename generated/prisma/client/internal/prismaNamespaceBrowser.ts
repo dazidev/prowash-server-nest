@@ -256,6 +256,7 @@ export const ContactScalarFieldEnum = {
   name: 'name',
   lastname: 'lastname',
   zipcode: 'zipcode',
+  email: 'email',
   phone: 'phone',
   comments: 'comments',
   status: 'status',

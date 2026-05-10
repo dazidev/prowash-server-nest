@@ -20,28 +20,17 @@ export type ContactModel = runtime.Types.Result.DefaultSelection<Prisma.$Contact
 
 export type AggregateContact = {
   _count: ContactCountAggregateOutputType | null
-  _avg: ContactAvgAggregateOutputType | null
-  _sum: ContactSumAggregateOutputType | null
   _min: ContactMinAggregateOutputType | null
   _max: ContactMaxAggregateOutputType | null
-}
-
-export type ContactAvgAggregateOutputType = {
-  zipcode: number | null
-  phone: number | null
-}
-
-export type ContactSumAggregateOutputType = {
-  zipcode: number | null
-  phone: number | null
 }
 
 export type ContactMinAggregateOutputType = {
   id: string | null
   name: string | null
   lastname: string | null
-  zipcode: number | null
-  phone: number | null
+  zipcode: string | null
+  email: string | null
+  phone: string | null
   comments: string | null
   status: $Enums.ContactStatus | null
   createdAt: Date | null
@@ -52,8 +41,9 @@ export type ContactMaxAggregateOutputType = {
   id: string | null
   name: string | null
   lastname: string | null
-  zipcode: number | null
-  phone: number | null
+  zipcode: string | null
+  email: string | null
+  phone: string | null
   comments: string | null
   status: $Enums.ContactStatus | null
   createdAt: Date | null
@@ -65,6 +55,7 @@ export type ContactCountAggregateOutputType = {
   name: number
   lastname: number
   zipcode: number
+  email: number
   phone: number
   comments: number
   status: number
@@ -74,21 +65,12 @@ export type ContactCountAggregateOutputType = {
 }
 
 
-export type ContactAvgAggregateInputType = {
-  zipcode?: true
-  phone?: true
-}
-
-export type ContactSumAggregateInputType = {
-  zipcode?: true
-  phone?: true
-}
-
 export type ContactMinAggregateInputType = {
   id?: true
   name?: true
   lastname?: true
   zipcode?: true
+  email?: true
   phone?: true
   comments?: true
   status?: true
@@ -101,6 +83,7 @@ export type ContactMaxAggregateInputType = {
   name?: true
   lastname?: true
   zipcode?: true
+  email?: true
   phone?: true
   comments?: true
   status?: true
@@ -113,6 +96,7 @@ export type ContactCountAggregateInputType = {
   name?: true
   lastname?: true
   zipcode?: true
+  email?: true
   phone?: true
   comments?: true
   status?: true
@@ -159,18 +143,6 @@ export type ContactAggregateArgs<ExtArgs extends runtime.Types.Extensions.Intern
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
    * 
-   * Select which fields to average
-  **/
-  _avg?: ContactAvgAggregateInputType
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-   * 
-   * Select which fields to sum
-  **/
-  _sum?: ContactSumAggregateInputType
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-   * 
    * Select which fields to find the minimum value
   **/
   _min?: ContactMinAggregateInputType
@@ -201,8 +173,6 @@ export type ContactGroupByArgs<ExtArgs extends runtime.Types.Extensions.Internal
   take?: number
   skip?: number
   _count?: ContactCountAggregateInputType | true
-  _avg?: ContactAvgAggregateInputType
-  _sum?: ContactSumAggregateInputType
   _min?: ContactMinAggregateInputType
   _max?: ContactMaxAggregateInputType
 }
@@ -211,15 +181,14 @@ export type ContactGroupByOutputType = {
   id: string
   name: string
   lastname: string | null
-  zipcode: number | null
-  phone: number
+  zipcode: string | null
+  email: string
+  phone: string
   comments: string
   status: $Enums.ContactStatus
   createdAt: Date
   updatedAt: Date
   _count: ContactCountAggregateOutputType | null
-  _avg: ContactAvgAggregateOutputType | null
-  _sum: ContactSumAggregateOutputType | null
   _min: ContactMinAggregateOutputType | null
   _max: ContactMaxAggregateOutputType | null
 }
@@ -246,8 +215,9 @@ export type ContactWhereInput = {
   id?: Prisma.StringFilter<"Contact"> | string
   name?: Prisma.StringFilter<"Contact"> | string
   lastname?: Prisma.StringNullableFilter<"Contact"> | string | null
-  zipcode?: Prisma.IntNullableFilter<"Contact"> | number | null
-  phone?: Prisma.IntFilter<"Contact"> | number
+  zipcode?: Prisma.StringNullableFilter<"Contact"> | string | null
+  email?: Prisma.StringFilter<"Contact"> | string
+  phone?: Prisma.StringFilter<"Contact"> | string
   comments?: Prisma.StringFilter<"Contact"> | string
   status?: Prisma.EnumContactStatusFilter<"Contact"> | $Enums.ContactStatus
   createdAt?: Prisma.DateTimeFilter<"Contact"> | Date | string
@@ -259,6 +229,7 @@ export type ContactOrderByWithRelationInput = {
   name?: Prisma.SortOrder
   lastname?: Prisma.SortOrderInput | Prisma.SortOrder
   zipcode?: Prisma.SortOrderInput | Prisma.SortOrder
+  email?: Prisma.SortOrder
   phone?: Prisma.SortOrder
   comments?: Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -273,8 +244,9 @@ export type ContactWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.ContactWhereInput | Prisma.ContactWhereInput[]
   name?: Prisma.StringFilter<"Contact"> | string
   lastname?: Prisma.StringNullableFilter<"Contact"> | string | null
-  zipcode?: Prisma.IntNullableFilter<"Contact"> | number | null
-  phone?: Prisma.IntFilter<"Contact"> | number
+  zipcode?: Prisma.StringNullableFilter<"Contact"> | string | null
+  email?: Prisma.StringFilter<"Contact"> | string
+  phone?: Prisma.StringFilter<"Contact"> | string
   comments?: Prisma.StringFilter<"Contact"> | string
   status?: Prisma.EnumContactStatusFilter<"Contact"> | $Enums.ContactStatus
   createdAt?: Prisma.DateTimeFilter<"Contact"> | Date | string
@@ -286,16 +258,15 @@ export type ContactOrderByWithAggregationInput = {
   name?: Prisma.SortOrder
   lastname?: Prisma.SortOrderInput | Prisma.SortOrder
   zipcode?: Prisma.SortOrderInput | Prisma.SortOrder
+  email?: Prisma.SortOrder
   phone?: Prisma.SortOrder
   comments?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.ContactCountOrderByAggregateInput
-  _avg?: Prisma.ContactAvgOrderByAggregateInput
   _max?: Prisma.ContactMaxOrderByAggregateInput
   _min?: Prisma.ContactMinOrderByAggregateInput
-  _sum?: Prisma.ContactSumOrderByAggregateInput
 }
 
 export type ContactScalarWhereWithAggregatesInput = {
@@ -305,8 +276,9 @@ export type ContactScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"Contact"> | string
   name?: Prisma.StringWithAggregatesFilter<"Contact"> | string
   lastname?: Prisma.StringNullableWithAggregatesFilter<"Contact"> | string | null
-  zipcode?: Prisma.IntNullableWithAggregatesFilter<"Contact"> | number | null
-  phone?: Prisma.IntWithAggregatesFilter<"Contact"> | number
+  zipcode?: Prisma.StringNullableWithAggregatesFilter<"Contact"> | string | null
+  email?: Prisma.StringWithAggregatesFilter<"Contact"> | string
+  phone?: Prisma.StringWithAggregatesFilter<"Contact"> | string
   comments?: Prisma.StringWithAggregatesFilter<"Contact"> | string
   status?: Prisma.EnumContactStatusWithAggregatesFilter<"Contact"> | $Enums.ContactStatus
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Contact"> | Date | string
@@ -317,8 +289,9 @@ export type ContactCreateInput = {
   id?: string
   name: string
   lastname?: string | null
-  zipcode?: number | null
-  phone: number
+  zipcode?: string | null
+  email: string
+  phone: string
   comments: string
   status: $Enums.ContactStatus
   createdAt?: Date | string
@@ -329,8 +302,9 @@ export type ContactUncheckedCreateInput = {
   id?: string
   name: string
   lastname?: string | null
-  zipcode?: number | null
-  phone: number
+  zipcode?: string | null
+  email: string
+  phone: string
   comments: string
   status: $Enums.ContactStatus
   createdAt?: Date | string
@@ -341,8 +315,9 @@ export type ContactUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   lastname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  zipcode?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  phone?: Prisma.IntFieldUpdateOperationsInput | number
+  zipcode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.StringFieldUpdateOperationsInput | string
   comments?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumContactStatusFieldUpdateOperationsInput | $Enums.ContactStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -353,8 +328,9 @@ export type ContactUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   lastname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  zipcode?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  phone?: Prisma.IntFieldUpdateOperationsInput | number
+  zipcode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.StringFieldUpdateOperationsInput | string
   comments?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumContactStatusFieldUpdateOperationsInput | $Enums.ContactStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -365,8 +341,9 @@ export type ContactCreateManyInput = {
   id?: string
   name: string
   lastname?: string | null
-  zipcode?: number | null
-  phone: number
+  zipcode?: string | null
+  email: string
+  phone: string
   comments: string
   status: $Enums.ContactStatus
   createdAt?: Date | string
@@ -377,8 +354,9 @@ export type ContactUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   lastname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  zipcode?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  phone?: Prisma.IntFieldUpdateOperationsInput | number
+  zipcode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.StringFieldUpdateOperationsInput | string
   comments?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumContactStatusFieldUpdateOperationsInput | $Enums.ContactStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -389,8 +367,9 @@ export type ContactUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   lastname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  zipcode?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  phone?: Prisma.IntFieldUpdateOperationsInput | number
+  zipcode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.StringFieldUpdateOperationsInput | string
   comments?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumContactStatusFieldUpdateOperationsInput | $Enums.ContactStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -402,6 +381,7 @@ export type ContactCountOrderByAggregateInput = {
   name?: Prisma.SortOrder
   lastname?: Prisma.SortOrder
   zipcode?: Prisma.SortOrder
+  email?: Prisma.SortOrder
   phone?: Prisma.SortOrder
   comments?: Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -409,16 +389,12 @@ export type ContactCountOrderByAggregateInput = {
   updatedAt?: Prisma.SortOrder
 }
 
-export type ContactAvgOrderByAggregateInput = {
-  zipcode?: Prisma.SortOrder
-  phone?: Prisma.SortOrder
-}
-
 export type ContactMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   lastname?: Prisma.SortOrder
   zipcode?: Prisma.SortOrder
+  email?: Prisma.SortOrder
   phone?: Prisma.SortOrder
   comments?: Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -431,24 +407,12 @@ export type ContactMinOrderByAggregateInput = {
   name?: Prisma.SortOrder
   lastname?: Prisma.SortOrder
   zipcode?: Prisma.SortOrder
+  email?: Prisma.SortOrder
   phone?: Prisma.SortOrder
   comments?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-}
-
-export type ContactSumOrderByAggregateInput = {
-  zipcode?: Prisma.SortOrder
-  phone?: Prisma.SortOrder
-}
-
-export type NullableIntFieldUpdateOperationsInput = {
-  set?: number | null
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
 }
 
 export type EnumContactStatusFieldUpdateOperationsInput = {
@@ -462,6 +426,7 @@ export type ContactSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   name?: boolean
   lastname?: boolean
   zipcode?: boolean
+  email?: boolean
   phone?: boolean
   comments?: boolean
   status?: boolean
@@ -474,6 +439,7 @@ export type ContactSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   name?: boolean
   lastname?: boolean
   zipcode?: boolean
+  email?: boolean
   phone?: boolean
   comments?: boolean
   status?: boolean
@@ -486,6 +452,7 @@ export type ContactSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   name?: boolean
   lastname?: boolean
   zipcode?: boolean
+  email?: boolean
   phone?: boolean
   comments?: boolean
   status?: boolean
@@ -498,6 +465,7 @@ export type ContactSelectScalar = {
   name?: boolean
   lastname?: boolean
   zipcode?: boolean
+  email?: boolean
   phone?: boolean
   comments?: boolean
   status?: boolean
@@ -505,7 +473,7 @@ export type ContactSelectScalar = {
   updatedAt?: boolean
 }
 
-export type ContactOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "lastname" | "zipcode" | "phone" | "comments" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["contact"]>
+export type ContactOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "lastname" | "zipcode" | "email" | "phone" | "comments" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["contact"]>
 
 export type $ContactPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Contact"
@@ -514,8 +482,9 @@ export type $ContactPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     id: string
     name: string
     lastname: string | null
-    zipcode: number | null
-    phone: number
+    zipcode: string | null
+    email: string
+    phone: string
     comments: string
     status: $Enums.ContactStatus
     createdAt: Date
@@ -946,8 +915,9 @@ export interface ContactFieldRefs {
   readonly id: Prisma.FieldRef<"Contact", 'String'>
   readonly name: Prisma.FieldRef<"Contact", 'String'>
   readonly lastname: Prisma.FieldRef<"Contact", 'String'>
-  readonly zipcode: Prisma.FieldRef<"Contact", 'Int'>
-  readonly phone: Prisma.FieldRef<"Contact", 'Int'>
+  readonly zipcode: Prisma.FieldRef<"Contact", 'String'>
+  readonly email: Prisma.FieldRef<"Contact", 'String'>
+  readonly phone: Prisma.FieldRef<"Contact", 'String'>
   readonly comments: Prisma.FieldRef<"Contact", 'String'>
   readonly status: Prisma.FieldRef<"Contact", 'ContactStatus'>
   readonly createdAt: Prisma.FieldRef<"Contact", 'DateTime'>

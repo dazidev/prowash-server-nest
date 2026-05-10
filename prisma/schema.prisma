@@ -10,6 +10,7 @@ datasource db {
 //* MODELO PARA LOS USUARIOS DE LA APP MOBILE
 enum UserRole {
   ADMIN
+  MOD
   USER
 }
 
@@ -250,8 +251,9 @@ model Contact {
   id        String         @id @default(uuid())
   name      String
   lastname  String?
-  zipcode   Int?
-  phone     Int
+  zipcode   String?
+  email     String
+  phone     String
   comments  String
   status    ContactStatus
   createdAt DateTime       @default(now()) @db.Timestamptz()
