@@ -85,6 +85,28 @@ export class PublicService {
     }
   }
 
+  async deleteContact(id: string) {
+    try {
+      const contact = await this.prisma.contact.findUnique({
+        where: { id },
+      });
+
+      if (!contact) {
+        throw new NotFoundException('Contact not found');
+      }
+
+      const update = await this.prisma.contact.delete({
+        where: { id },
+      });
+
+      if (!update) throw new Error('Contact not deleted');
+
+      return;
+    } catch (error) {
+      this.handleDBErrors(error);
+    }
+  }
+
   private handleDBErrors(error): never {
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&

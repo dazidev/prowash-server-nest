@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   ParseUUIDPipe,
+  Delete,
 } from '@nestjs/common';
 import { PublicService } from './public.service';
 import { CreateContactDto } from './dto/create-contact.dto';
@@ -36,5 +37,11 @@ export class PublicController {
   @Auth(ValidRoles.mod, ValidRoles.admin)
   changeContactStatus(@Param('id', ParseUUIDPipe) id: string) {
     return this.publicService.changeContactStatus(id);
+  }
+
+  @Delete('contact/:id')
+  @Auth(ValidRoles.mod, ValidRoles.admin)
+  deleteContact(@Param('id', ParseUUIDPipe) id: string) {
+    return this.publicService.deleteContact(id);
   }
 }
