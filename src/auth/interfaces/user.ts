@@ -1,4 +1,4 @@
-type UserRole = 'ADMIN' | 'USER';
+type UserRole = 'ADMIN' | 'MOD' | 'USER';
 type UserStatus = 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
 
 export interface User {
