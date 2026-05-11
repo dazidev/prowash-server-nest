@@ -12,7 +12,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { JwtAccessPayload, JwtRefreshPayload, User } from './interfaces';
 import { RefreshWebDto } from './dto/refresh-web.dto';
-import { Prisma } from 'generated/prisma/client/client';
+import { Prisma } from '../generated/prisma/client/client';
 
 @Injectable()
 export class AuthService {

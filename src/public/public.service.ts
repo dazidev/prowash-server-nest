@@ -4,7 +4,7 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma } from 'generated/prisma/client/client';
+import { Prisma } from '../generated/prisma/client/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateContactDto } from './dto/create-contact.dto';
 

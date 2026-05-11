@@ -7,7 +7,6 @@ import {
   Param,
   Delete,
   UseGuards,
-  Res,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
@@ -21,7 +20,6 @@ import { UserRoleGuard } from './guards/user-role.guard';
 import { RoleProtected } from './decorators/role-protected.decorator';
 import { AuthStrategy, ValidRoles } from './interfaces';
 import { Auth } from './decorators/auth.decorator';
-import { Response } from 'express';
 
 @Controller('auth')
 export class AuthController {
