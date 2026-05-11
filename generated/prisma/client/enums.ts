@@ -11,6 +11,7 @@
 
 export const UserRole = {
   ADMIN: 'ADMIN',
+  MOD: 'MOD',
   USER: 'USER'
 } as const
 
