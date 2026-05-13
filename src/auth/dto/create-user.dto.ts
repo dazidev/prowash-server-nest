@@ -1,3 +1,4 @@
+import { Transform } from 'class-transformer';
 import {
   IsEmail,
   IsNotEmpty,
@@ -20,6 +21,9 @@ export class CreateUserDto {
   @MaxLength(50)
   readonly lastname!: string;
 
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.trim().toLowerCase() : value,
+  )
   @IsEmail()
   readonly email!: string;
 

@@ -30,15 +30,16 @@ export class AuthController {
     return this.authService.create(createUserDto);
   }
 
+  //* WEB AUTHENTICATION
   @Post('login-web')
-  async loginUser(@Body() loginUserDto: LoginUserDto, @GetRealIP() ip: string) {
+  async loginUserWeb(@Body() loginUserDto: LoginUserDto, @GetRealIP() ip: string) {
     return await this.authService.loginWeb(loginUserDto, ip);
   }
 
   @Post('logout-web')
   @UseGuards(AuthGuard(AuthStrategy.REFRESH))
   @HttpCode(HttpStatus.OK)
-  async logoutUser(
+  async logoutUserWeb(
     @GetUser() user: User,
     @GetUser('sessionId') sessionId: string,
   ) {
@@ -47,7 +48,33 @@ export class AuthController {
 
   @Post('refresh-web')
   @UseGuards(AuthGuard(AuthStrategy.REFRESH))
-  async getRefreshToken(
+  async getRefreshTokenWeb(
+    @GetUser() user: User,
+    @GetUser('sessionId') sessionId: string,
+    @Body() refreshWebDto: RefreshWebDto,
+  ) {
+    return this.authService.getRefreshTokenWeb(user, sessionId, refreshWebDto);
+  }
+
+  //* MOBILE AUTHENTICATION
+  @Post('login-mobile')
+  async loginUserMobile(@Body() loginUserDto: LoginUserDto, @GetRealIP() ip: string) {
+    return await this.authService.loginMobile(loginUserDto, ip);
+  }
+
+  @Post('logout-mobile')
+  @UseGuards(AuthGuard(AuthStrategy.REFRESH))
+  @HttpCode(HttpStatus.OK)
+  async logoutUserMobile(
+    @GetUser() user: User,
+    @GetUser('sessionId') sessionId: string,
+  ) {
+    return await this.authService.logoutWeb(user, sessionId);
+  }
+
+  @Post('refresh-mobile')
+  @UseGuards(AuthGuard(AuthStrategy.REFRESH))
+  async getRefreshTokenMobile(
     @GetUser() user: User,
     @GetUser('sessionId') sessionId: string,
     @Body() refreshWebDto: RefreshWebDto,

@@ -51,7 +51,99 @@ export class AuthService {
     }
   }
 
+  //* WEB AUTHENTICATION
   async loginWeb(loginUserDto: LoginUserDto, ip: string) {
+    const data = await this.login(loginUserDto, ip);
+
+    return data;
+  }
+
+  async logoutWeb(user: User, sessionId: string) {
+    return await this.logout(user, sessionId);
+  }
+
+  async getRefreshTokenWeb(
+    user: User,
+    sessionId: string,
+    refreshWebDto: RefreshWebDto,
+  ) {
+    try {
+      const accessTokenExpiresIn =
+        parseInt(this.configService.get('TIME_ACCESS_TOKEN') ?? '20m') * 60; // SECONDS
+
+      const refreshTokenExpiresIn =
+        parseInt(this.configService.get('TIME_REFRESH_TOKEN') ?? '7d') *
+        60 *
+        60 *
+        24; // SECONDS
+
+      const expiresAt = new Date(Date.now() + 1000 * refreshTokenExpiresIn);
+
+      const refreshToken = this.generateJwtRefreshToken({
+        userId: user.id,
+        sessionId: sessionId,
+      });
+
+      const session = await this.prisma.userSession.update({
+        data: { refreshToken: bcrypt.hashSync(refreshToken, 10), expiresAt },
+        where: { id: sessionId },
+      });
+
+      if (!session) throw new Error('session not updated');
+
+      const accessToken = this.generateJwtAccessToken({
+        id: user.id,
+      });
+
+      return {
+        accessToken,
+        refreshToken,
+        accessTokenExpiresIn,
+        refreshTokenExpiresIn,
+      };
+    } catch (error) {
+      this.handleDBErrors(error);
+    }
+  }
+
+  //* MOBILE AUTHENTICATION
+  async loginMobile(loginUserDto: LoginUserDto, ip: string) {
+    const data = await this.login(loginUserDto, ip);
+
+    return {
+      user: data.user,
+      tokens: {
+        access: data.accessToken,
+        refresh: data.refreshToken,
+      },
+      expiresIn: {
+        access: data.accessTokenExpiresIn,
+        refresh: data.refreshTokenExpiresIn
+      }
+    };
+  }
+
+  async logoutMobile(user: User, sessionId: string) {
+    return await this.logout(user, sessionId);
+  }
+
+  findAll() {
+    return `This action returns all auth`;
+  }
+
+  findOne(id: number) {
+    return `This action returns a #${id} auth`;
+  }
+
+  update(id: number, updateAuthDto: UpdateAuthDto) {
+    return `This action updates a #${id} auth`;
+  }
+
+  remove(id: number) {
+    return `This action removes a #${id} auth`;
+  }
+
+  private async login(loginUserDto: LoginUserDto, ip: string) {
     try {
       const { email, password: pass, deviceId, deviceInfo } = loginUserDto;
 
@@ -116,7 +208,7 @@ export class AuthService {
     }
   }
 
-  async logoutWeb(user: User, sessionId: string) {
+  async logout(user: User, sessionId: string) {
     try {
       const session = await this.prisma.userSession.findUnique({
         where: { id: sessionId },
@@ -139,66 +231,6 @@ export class AuthService {
     }
   }
 
-  async getRefreshTokenWeb(
-    user: User,
-    sessionId: string,
-    refreshWebDto: RefreshWebDto,
-  ) {
-    try {
-      const accessTokenExpiresIn =
-        parseInt(this.configService.get('TIME_ACCESS_TOKEN') ?? '20m') * 60; // SECONDS
-
-      const refreshTokenExpiresIn =
-        parseInt(this.configService.get('TIME_REFRESH_TOKEN') ?? '7d') *
-        60 *
-        60 *
-        24; // SECONDS
-
-      const expiresAt = new Date(Date.now() + 1000 * refreshTokenExpiresIn);
-
-      const refreshToken = this.generateJwtRefreshToken({
-        userId: user.id,
-        sessionId: sessionId,
-      });
-
-      const session = await this.prisma.userSession.update({
-        data: { refreshToken: bcrypt.hashSync(refreshToken, 10), expiresAt },
-        where: { id: sessionId },
-      });
-
-      if (!session) throw new Error('session not updated');
-
-      const accessToken = this.generateJwtAccessToken({
-        id: user.id,
-      });
-
-      return {
-        accessToken,
-        refreshToken,
-        accessTokenExpiresIn,
-        refreshTokenExpiresIn,
-      };
-    } catch (error) {
-      this.handleDBErrors(error);
-    }
-  }
-
-  findAll() {
-    return `This action returns all auth`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} auth`;
-  }
-
-  update(id: number, updateAuthDto: UpdateAuthDto) {
-    return `This action updates a #${id} auth`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} auth`;
-  }
-
   private generateJwtAccessToken(payload: JwtAccessPayload) {
     const token = this.jwtService.sign(payload);
     return token;
@@ -212,7 +244,7 @@ export class AuthService {
     return token;
   }
 
-  private handleDBErrors(error): never {
+  private handleDBErrors(error: unknown): never {
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === 'P2002'
