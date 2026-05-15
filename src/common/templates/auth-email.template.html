@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #085fd9 0%, #0841D9 100%);
+            padding: 30px 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .logo-placeholder {
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 1;
+        }
+                
+        .content {
+            padding: 40px 30px;
+            text-align: center;
+        }
+        
+        .greeting {
+            font-size: 24px;
+            color: #2c2c2c;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        
+        .message {
+            font-size: 16px;
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+        
+        .code-container {
+            background: linear-gradient(135deg, #defa7a 0%, #C8FF01 100%);
+            padding: 25px;
+            border-radius: 12px;
+            margin: 30px 0;
+            box-shadow: 0 8px 25px rgba(126, 211, 33, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .code-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            animation: shine 3s infinite;
+        }
+        
+        .code-label {
+            font-size: 14px;
+            color: #2c2c2c;
+            margin-bottom: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .confirmation-code {
+            font-size: 44px;
+            font-weight: bold;
+            color: #2c2c2c;
+            letter-spacing: 8px;
+            font-family: 'Courier New', monospace;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .instructions {
+            font-size: 14px;
+            color: #666;
+            margin: 25px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            font-size: 13px;
+            color: #856404;
+        }
+        
+        .footer {
+            background: #2c2c2c;
+            color: white;
+            padding: 30px;
+            text-align: center;
+            font-size: 12px;
+        }
+        
+        .contact-info {
+            margin: 15px 0;
+        }
+        
+        .social-links {
+            margin: 20px 0;
+        }
+        
+        .social-links a {
+            color: #7ed321;
+            text-decoration: none;
+            margin: 0 10px;
+            font-weight: bold;
+        }
+        
+        .social-links a:hover {
+            color: #a4e636;
+        }
+        
+        .cleaning-icons {
+            font-size: 20px;
+            margin: 15px 0;
+            opacity: 0.7;
+        }
+        
+        @media (max-width: 600px) {
+            .email-container {
+                margin: 10px;
+                border-radius: 10px;
+            }
+            
+            .content {
+                padding: 30px 20px;
+            }
+            
+            .confirmation-code {
+                font-size: 28px;
+                letter-spacing: 4px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo-placeholder">
+                <img src="https://res.cloudinary.com/dydna5skt/image/upload/v1751999050/PROWASH365/Logo_zyb9md.png" alt="ProWash365 Logo" style="max-width: 100%; height: auto;">
+            </div>
+        </div>
+        
+        <!-- Content -->
+        <div class="content">
+            <h2 class="greeting">Hello {{name}}!</h2>
+            
+            <p class="message">
+                Thank you for contacting <strong>PROWASH 365</strong>. To confirm your request and ensure the security of your account, we need you to verify your identity using the following verification code.
+            </p>
+            
+            <div class="code-container">
+                <div class="code-label">Your Verification Code</div>
+                <div class="confirmation-code">{{code}}</div>
+            </div>
+            
+            <div class="instructions">
+                <strong>📋 Instructions:</strong><br>
+                • Enter this code on the website or app where requested<br>
+                • The code is valid for 15 minutes<br>
+                • Do not share this code with anyone<br>
+                • If you didn't request this code, please ignore this message
+            </div>
+            
+            <div class="warning">
+                <strong>⚠️ Important:</strong> This code is personal and non-transferable. PROWASH 365 will never ask for this code via phone or text message.
+            </div>
+            
+            <p class="message">
+                Once verified, you'll be able to access all our professional cleaning services. We're here to make your life easier!
+            </p>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <div class="cleaning-icons">🧽 🚿 ✨ 🏠 💧</div>
+            
+            <div class="contact-info">
+                <strong>PROWASH 365 - Professional Cleaning Services</strong><br>
+                📧 contact@prowash365.com | 📞 +1 (864) 349-3989
+            </div>
+            
+            <div class="social-links">
+                <a href="https://www.instagram.com/prowash_365/">Instagram</a> |
+                <a href="https://prowash365.com">Web</a>
+            </div>
+            
+            <p style="margin-top: 20px; opacity: 0.8;">
+                © 2025 PROWASH 365. All rights reserved.<br>
+                Professional cleaning 365 days a year.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

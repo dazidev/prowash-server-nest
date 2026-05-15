@@ -9,10 +9,17 @@ import { CreateUserDto, LoginUserDto } from './dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 
+import path from 'path';
+import fs from "fs";
 import * as bcrypt from 'bcrypt';
 import { JwtAccessPayload, JwtRefreshPayload, User } from './interfaces';
 import { RefreshWebDto } from './dto/refresh-web.dto';
 import { Prisma } from '../generated/prisma/client/client';
+import { encryptToString } from 'src/common';
+import { BrevoService } from 'src/infrastructure/services/brevo.service';
+import { VerifyEmailCodeDto } from './dto/verify-email-code.dto';
+import { getTemplatePath } from 'src/common/helpers/get-template-path.helper';
+
 
 @Injectable()
 export class AuthService {
@@ -20,6 +27,7 @@ export class AuthService {
     private prisma: PrismaService,
     private readonly jwtService: JwtService,
     private configService: ConfigService,
+    private readonly brevoService: BrevoService,
   ) {}
 
   async create(createUserDto: CreateUserDto) {
@@ -127,20 +135,86 @@ export class AuthService {
     return await this.logout(user, sessionId);
   }
 
-  findAll() {
-    return `This action returns all auth`;
+  async sendEmailCode(user: User) {
+    const { email, name, lastname, id } = user;
+
+    const templatePath = getTemplatePath('auth-email.template.html');
+
+    let html = fs.readFileSync(templatePath, "utf8");
+    const code = Math.floor(1000 + Math.random() * 9000)
+      .toString()
+      .slice(0, 4);
+    html = html
+      .replace("{{name}}", `${name} ${lastname}`)
+      .replace("{{code}}", code);
+
+    const hashedCode = encryptToString(code);
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+    try {
+      const code = await this.prisma.emailVerificationCodes.create({
+        data: {
+          userId: id,
+          hashedCode,
+          expiresAt,
+          purpose: "EMAIL_VERIFY",
+          status: "PENDING",
+        }
+      })
+
+      if (!code) throw new Error("Code not sent")
+
+      await this.brevoService.sendEmail(email, "Verification code", html)
+
+      return;
+    } catch (error) {
+      this.handleDBErrors(error);
+    }
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} auth`;
-  }
+  async verifyEmailCode(user: User, verifyEmailCodeDto: VerifyEmailCodeDto) {
+    const { id } = user;
+    const { code } = verifyEmailCodeDto;
 
-  update(id: number, updateAuthDto: UpdateAuthDto) {
-    return `This action updates a #${id} auth`;
-  }
+    const hashedCode = encryptToString(code);
+    try {
+      const storeCode = await this.prisma.emailVerificationCodes.findUnique({
+        where: {
+          userId_hashedCode_purpose: {
+            userId: id,
+            hashedCode,
+            purpose: "EMAIL_VERIFY"
+          }
+        }
+      })
 
-  remove(id: number) {
-    return `This action removes a #${id} auth`;
+      if (!storeCode) throw new Error("Code not found")
+      
+      const nowDate = Date.now();
+
+      const diffInMinutes =
+        (nowDate - new Date(storeCode.expiresAt).getTime()) / 1000 / 60;
+      if (diffInMinutes >= 0) throw new Error("Code expired");
+
+      await this.prisma.emailVerificationCodes.update({
+        data: {
+          consumedAt: new Date(nowDate),
+          status: "USED",
+        },
+        where: { id: storeCode.id }
+      })
+
+      await this.prisma.user.update({
+        where: { id },
+        data: {
+          isEmailVerified: true,
+        }
+      })
+
+      return;
+    } catch (error) {
+      this.handleDBErrors(error);
+    }
   }
 
   private async login(loginUserDto: LoginUserDto, ip: string) {

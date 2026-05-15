@@ -8,6 +8,7 @@ import { AuthController } from './auth.controller';
 import { PrismaModule } from 'src/prisma/prisma.module';
 import { JwtAccessStrategy } from './strategies/jwt-access.strategy';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
+import { InfrastructureModule } from 'src/infrastructure/infrastructure.module';
 
 @Module({
   controllers: [AuthController],
@@ -27,6 +28,7 @@ import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
         };
       },
     }),
+    InfrastructureModule,
   ],
   exports: [JwtAccessStrategy, PassportModule, JwtModule, AuthModule],
 })

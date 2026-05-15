@@ -3,23 +3,18 @@ import {
   Get,
   Post,
   Body,
-  Patch,
-  Param,
-  Delete,
   UseGuards,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto, LoginUserDto, RefreshWebDto } from './dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { GetRealIP, GetUser, RawHeaders } from './decorators';
 import { User } from './interfaces/user';
-import { UserRoleGuard } from './guards/user-role.guard';
-import { RoleProtected } from './decorators/role-protected.decorator';
-import { AuthStrategy, ValidRoles } from './interfaces';
+import { AuthStrategy } from './interfaces';
 import { Auth } from './decorators/auth.decorator';
+import { VerifyEmailCodeDto } from './dto/verify-email-code.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -69,7 +64,7 @@ export class AuthController {
     @GetUser() user: User,
     @GetUser('sessionId') sessionId: string,
   ) {
-    return await this.authService.logoutWeb(user, sessionId);
+    return await this.authService.logoutMobile(user, sessionId);
   }
 
   @Post('refresh-mobile')
@@ -88,61 +83,15 @@ export class AuthController {
     return user;
   }
 
-  @Get('private')
-  @UseGuards(AuthGuard())
-  testingPrivateRoute(
-    // @Req() request: Express.Request,
-    @GetUser() user: User,
-    @GetUser('email') userEmail: string,
-    @RawHeaders() rawHeaders: string[],
-  ) {
-    return {
-      ok: true,
-      message: 'Hola Mundo Private',
-      user,
-      userEmail,
-      rawHeaders,
-    };
+  @Post('send-email-code')
+  @Auth()
+  sendEmailCode(@GetUser() user: User) {
+    return this.authService.sendEmailCode(user);
   }
 
-  // @SetMetadata('role', 'USER')
-
-  @Get('private2')
-  @RoleProtected(ValidRoles.user)
-  @UseGuards(AuthGuard(), UserRoleGuard)
-  privateRoute2(@GetUser() user: User) {
-    return {
-      ok: true,
-      user,
-    };
-  }
-
-  @Get('private3')
-  @Auth(ValidRoles.admin)
-  privateRoute3(@GetUser() user: User) {
-    return {
-      ok: true,
-      user,
-    };
-  }
-
-  @Get()
-  findAll() {
-    return this.authService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.authService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateAuthDto: UpdateAuthDto) {
-    return this.authService.update(+id, updateAuthDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.authService.remove(+id);
+  @Post('verify-email-code')
+  @Auth()
+  verifyEmailCode(@Body() verifyEmailCodeDto: VerifyEmailCodeDto, @GetUser() user: User) {
+    return this.authService.verifyEmailCode(user, verifyEmailCodeDto);
   }
 }
