@@ -219,15 +219,14 @@ model PackageRange {
 }
 
 model PackagePrice {
-  id          String        @id @default(uuid())
-  price       Int
-  description String
-  packageId   String
-  package     Package      @relation(fields: [packageId], references: [id], onDelete: Cascade)
-  rangeId     String
-  range       PackageRange @relation(fields: [rangeId], references: [id], onDelete: Cascade)
-  createdAt   DateTime      @default(now()) @db.Timestamptz()
-  updatedAt   DateTime      @updatedAt @db.Timestamptz()
+  id        String        @id @default(uuid())
+  price     Int
+  packageId String
+  package   Package      @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  rangeId   String
+  range     PackageRange @relation(fields: [rangeId], references: [id], onDelete: Cascade)
+  createdAt DateTime      @default(now()) @db.Timestamptz()
+  updatedAt DateTime      @updatedAt @db.Timestamptz()
 
   @@map("package_prices")
 }
