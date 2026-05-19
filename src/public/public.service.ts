@@ -8,6 +8,23 @@ import { Prisma } from '../generated/prisma/client/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateContactDto } from './dto/create-contact.dto';
 
+const mapPackage = (r: any): object => ({
+  id: r.id,
+  name: r.name,
+  services: (r.ServiceOnPackage ?? []).map((service: any) => ({
+    id: service.id,
+    serviceId: service.serviceId,
+    name: service.service.name,
+    amount: service.amount,
+  })),
+  prices: (r.PackagePrice ?? []).map((price: any) => ({
+    id: price.id,
+    price: price.price,
+    name: price.range.description,
+    unit: price.range.unit,
+  })),
+});
+
 @Injectable()
 export class PublicService {
   constructor(private prisma: PrismaService) {}
@@ -103,6 +120,31 @@ export class PublicService {
 
       return;
     } catch (error) {
+      this.handleDBErrors(error);
+    }
+  }
+
+  async getPackages() {
+    try {
+      const packages = await this.prisma.package.findMany({
+        include: {
+          ServiceOnPackage: {
+            include: {
+              service: true,
+            },
+          },
+          PackagePrice: {
+            include: {
+              range: true,
+            },
+          },
+        },
+      });
+
+      const data = packages.map(mapPackage);
+
+      return data;
+    } catch (error: unknown) {
       this.handleDBErrors(error);
     }
   }

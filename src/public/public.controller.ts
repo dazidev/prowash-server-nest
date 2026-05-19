@@ -44,4 +44,9 @@ export class PublicController {
   deleteContact(@Param('id', ParseUUIDPipe) id: string) {
     return this.publicService.deleteContact(id);
   }
+
+  @Get('packages')
+  getPackages() {
+    return this.publicService.getPackages();
+  }
 }
