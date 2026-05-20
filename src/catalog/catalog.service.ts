@@ -213,8 +213,6 @@ export class CatalogService {
         },
       });
 
-      console.log(packageResult);
-
       return packageResult;
     } catch (error: unknown) {
       this.handleDBErrors(error);
