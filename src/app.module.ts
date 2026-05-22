@@ -5,6 +5,7 @@ import { PublicModule } from './public/public.module';
 import { AdminModule } from './admin/admin.module';
 import { ConfigModule } from '@nestjs/config';
 import { CatalogModule } from './catalog/catalog.module';
+import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { CatalogModule } from './catalog/catalog.module';
     PublicModule,
     AdminModule,
     CatalogModule,
+    UserModule,
   ],
 })
 export class AppModule {}
