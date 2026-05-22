@@ -1,8 +1,11 @@
-import { Module } from "@nestjs/common";
-import { BrevoService } from "./services/brevo.service";
+import { Module } from '@nestjs/common';
+import { BrevoService } from './services/brevo.service';
+import { R2Service } from './services/r2.service';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
-  providers: [BrevoService],
-  exports: [BrevoService],
+  imports: [ConfigModule],
+  providers: [BrevoService, R2Service],
+  exports: [BrevoService, R2Service],
 })
 export class InfrastructureModule {}
