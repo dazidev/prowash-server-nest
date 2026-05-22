@@ -38,11 +38,11 @@ model User {
   EmailVerificationCodes EmailVerificationCodes[]
   UserHouse              UserHouse[]
   userSessions           UserSession[]
+  packageOrders          PackageOrder[]
 
   @@index([status])
   @@index([roles])
   @@map("users") // nombre de la tabla
-
 }
 
 model UserSession {
@@ -229,6 +229,30 @@ model PackagePrice {
   updatedAt DateTime      @updatedAt @db.Timestamptz()
 
   @@map("package_prices")
+}
+
+enum PackageOrderPurchaseStatus {
+  PENDING_REVIEW
+  ASSIGNED_APPOINTMENT
+  QUOTED
+  PAID
+  CANCELLED
+}
+
+model PackageOrder {
+  id             String                      @id @default(uuid())
+  name           String
+  initialPrice   Int
+  finalPrice     Int?
+  range          Int
+  userId         String
+  user           User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  purchaseStatus PackageOrderPurchaseStatus  @default(PENDING_REVIEW)
+  services       Json
+  createdAt      DateTime                    @default(now()) @db.Timestamptz()
+  updatedAt      DateTime                    @updatedAt @db.Timestamptz()
+
+  @@map("package_orders")
 }
 
 model Review {
