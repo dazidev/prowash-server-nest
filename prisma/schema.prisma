@@ -105,7 +105,7 @@ model EmailVerificationCodes {
 
 //* MODELOS PARA EL SISTEMA DE CASAS
 model UserHouse {
-  id               String    @id @default(uuid())
+  id               String          @id @default(uuid())
   name             String
   street           String
   complementStreet String?
@@ -114,9 +114,11 @@ model UserHouse {
   zipcode          String
   imageUrl         String?
   userId           String
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt        DateTime  @default(now()) @db.Timestamptz()
-  updatedAt        DateTime  @updatedAt @db.Timestamptz()
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt        DateTime        @default(now()) @db.Timestamptz()
+  updatedAt        DateTime        @updatedAt @db.Timestamptz()
+
+  packageOrders    PackageOrder[]
 
   @@unique([userId, name]) // El usuario no podrá tener dos casas con el mismo nombre
   @@index([userId])
@@ -247,6 +249,8 @@ model PackageOrder {
   range          Int
   userId         String
   user           User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  houseId        String
+  userHouse      UserHouse                  @relation(fields: [houseId], references: [id], onDelete: Cascade)
   purchaseStatus PackageOrderPurchaseStatus  @default(PENDING_REVIEW)
   services       Json
   createdAt      DateTime                    @default(now()) @db.Timestamptz()
