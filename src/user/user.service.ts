@@ -108,7 +108,7 @@ export class UserService {
     createPackageOrderDto: CreatePackageOrderDto,
   ) {
     try {
-      const { name, initialPrice, range, services } = createPackageOrderDto;
+      const { packageId, initialPrice, range } = createPackageOrderDto;
 
       const house = await this.prisma.userHouse.findUnique({
         where: { id: houseId, userId },
@@ -116,14 +116,33 @@ export class UserService {
 
       if (!house) throw new NotFoundException('House not found');
 
-      const servicesSnapshot = services.map((service) => ({
-        name: service.name,
-        quantity: service.quantity,
+      const packageInfo = await this.prisma.package.findUnique({
+        where: { id: packageId },
+        select: {
+          name: true,
+          ServiceOnPackage: {
+            select: {
+              amount: true,
+              service: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!packageInfo) throw new NotFoundException('Package not found');
+
+      const servicesSnapshot = packageInfo.ServiceOnPackage.map((item) => ({
+        name: item.service.name,
+        quantity: item.amount,
       }));
 
       const order = await this.prisma.packageOrder.create({
         data: {
-          name,
+          name: packageInfo.name,
           initialPrice,
           range,
           userId,
