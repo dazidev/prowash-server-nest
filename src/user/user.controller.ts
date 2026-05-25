@@ -83,6 +83,11 @@ export class UserController {
     );
   }
 
+  @Get('quotes')
+  getUserQuotes(@GetUser('id') id: string) {
+    return this.userService.getUserQuotes(id);
+  }
+
   @Post()
   create(@Body() createUserDto: CreateUserDto) {
     return this.userService.create(createUserDto);

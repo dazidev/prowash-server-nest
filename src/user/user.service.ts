@@ -157,6 +157,40 @@ export class UserService {
     }
   }
 
+  async getUserQuotes(userId: string) {
+    try {
+      const quotes = await this.prisma.packageOrder.findMany({
+        where: { userId },
+        select: {
+          id: true,
+          name: true,
+          initialPrice: true,
+          finalPrice: true,
+          range: true,
+          purchaseStatus: true,
+          services: true,
+          createdAt: true,
+          updatedAt: true,
+          userHouse: {
+            select: {
+              id: true,
+              name: true,
+              street: true,
+              complementStreet: true,
+              city: true,
+              state: true,
+              zipcode: true,
+            },
+          },
+        },
+      });
+
+      return quotes;
+    } catch (error: unknown) {
+      this.handleDBErrors(error);
+    }
+  }
+
   create(createUserDto: CreateUserDto) {
     return 'This action adds a new user';
   }
