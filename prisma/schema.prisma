@@ -174,11 +174,12 @@ model Advertising {
 //* MODELO DE PAQUETES
 
 model PackageService {
-  id               String              @id @default(uuid())
-  name             String              @unique
-  createdAt        DateTime            @default(now()) @db.Timestamptz()
-  updatedAt        DateTime            @updatedAt @db.Timestamptz()
-  ServiceOnPackage ServiceOnPackage[]
+  id                 String               @id @default(uuid())
+  name               String               @unique
+  createdAt          DateTime             @default(now()) @db.Timestamptz()
+  updatedAt          DateTime             @updatedAt @db.Timestamptz()
+  ServiceOnPackage   ServiceOnPackage[]
+  IndividualServices IndividualService[]
 
   @@map("package_services")
 }
@@ -287,4 +288,13 @@ model Contact {
   updatedAt DateTime       @updatedAt @db.Timestamptz()
 
   @@map("contacts")
+}
+
+model IndividualService {
+  id           String          @id @default(uuid())
+  initialPrice Int
+  serviceId    String          @unique
+  service      PackageService @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@map("individual_services")
 }
