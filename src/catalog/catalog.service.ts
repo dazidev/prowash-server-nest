@@ -7,6 +7,7 @@ import {
 import { Prisma } from '../generated/prisma/client/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import {
+  CreateIndividualServiceDto,
   CreatePackageDto,
   CreatePackageRangeDto,
   CreatePackageServiceDto,
@@ -223,6 +224,47 @@ export class CatalogService {
     try {
       await this.prisma.package.delete({ where: { id } });
       return;
+    } catch (error: unknown) {
+      this.handleDBErrors(error);
+    }
+  }
+
+  //* INDIVIDUAL SERVICES
+
+  async getIndividualServices() {
+    try {
+      const services = await this.prisma.individualService.findMany({
+        select: {
+          id: true,
+          initialPrice: true,
+          service: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      });
+
+      return services;
+    } catch (error: unknown) {
+      this.handleDBErrors(error);
+    }
+  }
+
+  async createIndividualService(
+    createIndividualServiceDto: CreateIndividualServiceDto,
+  ) {
+    try {
+      const { serviceId, initialPrice } = createIndividualServiceDto;
+
+      const individualService = await this.prisma.individualService.create({
+        data: {
+          serviceId,
+          initialPrice,
+        },
+      });
+
+      return individualService;
     } catch (error: unknown) {
       this.handleDBErrors(error);
     }

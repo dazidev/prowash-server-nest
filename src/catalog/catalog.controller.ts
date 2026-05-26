@@ -8,6 +8,7 @@ import {
   Delete,
 } from '@nestjs/common';
 import {
+  CreateIndividualServiceDto,
   CreatePackageDto,
   CreatePackageRangeDto,
   CreatePackageServiceDto,
@@ -90,5 +91,21 @@ export class CatalogController {
   @Delete('package/:id')
   deletePackage(@Param('id') id: string) {
     return this.catalogService.deletePackage(id);
+  }
+
+  //* INDIVIDUAL SERVICES
+
+  @Get('individual-services')
+  getIndividualServices() {
+    return this.catalogService.getIndividualServices();
+  }
+
+  @Post('individual-service')
+  createIndividualService(
+    @Body() createIndividualServiceDto: CreateIndividualServiceDto,
+  ) {
+    return this.catalogService.createIndividualService(
+      createIndividualServiceDto,
+    );
   }
 }

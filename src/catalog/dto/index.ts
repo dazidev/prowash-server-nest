@@ -1,3 +1,4 @@
+export { CreateIndividualServiceDto } from './service/create-individual-service.dto';
 export { CreatePackageDto } from './package/create-package.dto';
 export { CreatePackageRangeDto } from './range/create-package-range.dto';
 export { UpdatePackageRangeDto } from './range/update-package-range.dto';
