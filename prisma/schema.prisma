@@ -21,19 +21,19 @@ enum UserStatus {
 }
 
 model User {
-  id                     String                    @id @default(uuid())
-  name                   String
-  lastname               String
-  email                  String                    @unique
-  password               String
-  phoneNumber            String?                   @db.VarChar(20)
-  isEmailVerified        Boolean                   @default(false)
-  isPhoneNumberVerified  Boolean                   @default(false)
-  roles                  UserRole[]
-  status                 UserStatus                @default(ACTIVE)
-  lastLogin              DateTime?                 @db.Timestamptz()
-  createdAt              DateTime                  @default(now()) @db.Timestamptz()
-  updatedAt              DateTime                  @updatedAt @db.Timestamptz()
+  id                    String     @id @default(uuid())
+  name                  String
+  lastname              String
+  email                 String     @unique
+  password              String
+  phoneNumber           String?    @db.VarChar(20)
+  isEmailVerified       Boolean    @default(false)
+  isPhoneNumberVerified Boolean    @default(false)
+  roles                 UserRole[]
+  status                UserStatus @default(ACTIVE)
+  lastLogin             DateTime?  @db.Timestamptz()
+  createdAt             DateTime   @default(now()) @db.Timestamptz()
+  updatedAt             DateTime   @updatedAt @db.Timestamptz()
 
   EmailVerificationCodes EmailVerificationCodes[]
   UserHouse              UserHouse[]
@@ -46,17 +46,17 @@ model User {
 }
 
 model UserSession {
-  id            String     @default(uuid()) @id
+  id            String    @id @default(uuid())
   refreshToken  String
-  expiresAt     DateTime   @db.Timestamptz()
-  isRevoked     Boolean    @default(false)
-  revokedAt     DateTime?  @db.Timestamptz()
+  expiresAt     DateTime  @db.Timestamptz()
+  isRevoked     Boolean   @default(false)
+  revokedAt     DateTime? @db.Timestamptz()
   revokedReason String?
   deviceId      String
   deviceInfo    String
   ipAddress     String
-  createdAt     DateTime   @default(now()) @db.Timestamptz()
-  updatedAt     DateTime   @updatedAt @db.Timestamptz()
+  createdAt     DateTime  @default(now()) @db.Timestamptz()
+  updatedAt     DateTime  @updatedAt @db.Timestamptz()
   userId        String
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -80,20 +80,20 @@ enum VerificationPurpose {
 }
 
 model EmailVerificationCodes {
-  id         String               @id @default(uuid())
+  id         String @id @default(uuid())
   userId     String
-  user       User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   hashedCode String
 
   // gestión de uso
-  purpose    VerificationPurpose  @default(EMAIL_VERIFY)
-  status     VerificationStatus   @default(PENDING)
+  purpose VerificationPurpose @default(EMAIL_VERIFY)
+  status  VerificationStatus  @default(PENDING)
 
   // gestión de vida
-  expiresAt  DateTime             @db.Timestamptz()
-  consumedAt DateTime?            @db.Timestamptz()
-  createdAt  DateTime             @default(now()) @db.Timestamptz()
-  updatedAt  DateTime             @updatedAt @db.Timestamptz()
+  expiresAt  DateTime  @db.Timestamptz()
+  consumedAt DateTime? @db.Timestamptz()
+  createdAt  DateTime  @default(now()) @db.Timestamptz()
+  updatedAt  DateTime  @updatedAt @db.Timestamptz()
 
   @@unique([userId, hashedCode, purpose])
   @@index([userId, status])
@@ -105,7 +105,7 @@ model EmailVerificationCodes {
 
 //* MODELOS PARA EL SISTEMA DE CASAS
 model UserHouse {
-  id               String          @id @default(uuid())
+  id               String   @id @default(uuid())
   name             String
   street           String
   complementStreet String?
@@ -114,11 +114,11 @@ model UserHouse {
   zipcode          String
   imageUrl         String?
   userId           String
-  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt        DateTime        @default(now()) @db.Timestamptz()
-  updatedAt        DateTime        @updatedAt @db.Timestamptz()
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt        DateTime @default(now()) @db.Timestamptz()
+  updatedAt        DateTime @updatedAt @db.Timestamptz()
 
-  packageOrders    PackageOrder[]
+  packageOrders PackageOrder[]
 
   @@unique([userId, name]) // El usuario no podrá tener dos casas con el mismo nombre
   @@index([userId])
@@ -132,15 +132,15 @@ enum AdminRole {
 }
 
 model Admin {
-  id             String     @id @default(uuid())
+  id             String    @id @default(uuid())
   name           String
   lastname       String
-  email          String     @unique
+  email          String    @unique
   password       String
-  role           AdminRole  @default(GENERAL_ADMIN)
-  lastConnection DateTime?  @db.Timestamptz()
-  createdAt      DateTime   @default(now()) @db.Timestamptz()
-  updatedAt      DateTime   @updatedAt @db.Timestamptz()
+  role           AdminRole @default(GENERAL_ADMIN)
+  lastConnection DateTime? @db.Timestamptz()
+  createdAt      DateTime  @default(now()) @db.Timestamptz()
+  updatedAt      DateTime  @updatedAt @db.Timestamptz()
 
   @@map("admins")
 }
@@ -155,9 +155,9 @@ enum AdTypes {
 }
 
 model Advertising {
-  id        String    @id @default(uuid())
+  id        String   @id @default(uuid())
   type      AdTypes
-  order     Int       @unique
+  order     Int      @unique
   text      String?
   image1    String?
   image2    String?
@@ -165,8 +165,8 @@ model Advertising {
   image4    String?
   image5    String?
   video     String?
-  createdAt DateTime  @default(now()) @db.Timestamptz()
-  updatedAt DateTime  @updatedAt @db.Timestamptz()
+  createdAt DateTime @default(now()) @db.Timestamptz()
+  updatedAt DateTime @updatedAt @db.Timestamptz()
 
   @@map("advertising")
 }
@@ -174,10 +174,10 @@ model Advertising {
 //* MODELO DE PAQUETES
 
 model PackageService {
-  id                 String               @id @default(uuid())
-  name               String               @unique
-  createdAt          DateTime             @default(now()) @db.Timestamptz()
-  updatedAt          DateTime             @updatedAt @db.Timestamptz()
+  id                 String              @id @default(uuid())
+  name               String              @unique
+  createdAt          DateTime            @default(now()) @db.Timestamptz()
+  updatedAt          DateTime            @updatedAt @db.Timestamptz()
   ServiceOnPackage   ServiceOnPackage[]
   IndividualServices IndividualService[]
 
@@ -185,10 +185,10 @@ model PackageService {
 }
 
 model Package {
-  id               String              @id @default(uuid())
-  name             String              @unique
-  createdAt        DateTime            @default(now()) @db.Timestamptz()
-  updatedAt        DateTime            @updatedAt @db.Timestamptz()
+  id               String             @id @default(uuid())
+  name             String             @unique
+  createdAt        DateTime           @default(now()) @db.Timestamptz()
+  updatedAt        DateTime           @updatedAt @db.Timestamptz()
   ServiceOnPackage ServiceOnPackage[]
   PackagePrice     PackagePrice[]
 
@@ -196,14 +196,14 @@ model Package {
 }
 
 model ServiceOnPackage {
-  id        String          @id @default(uuid())
+  id        String         @id @default(uuid())
   amount    Int
   serviceId String
   service   PackageService @relation(fields: [serviceId], references: [id], onDelete: Cascade)
   packageId String
   package   Package        @relation(fields: [packageId], references: [id], onDelete: Cascade)
-  createdAt DateTime        @default(now()) @db.Timestamptz()
-  updatedAt DateTime        @updatedAt @db.Timestamptz()
+  createdAt DateTime       @default(now()) @db.Timestamptz()
+  updatedAt DateTime       @updatedAt @db.Timestamptz()
 
   @@unique([serviceId, packageId])
   @@index([packageId])
@@ -211,25 +211,25 @@ model ServiceOnPackage {
 }
 
 model PackageRange {
-  id           String          @id @default(uuid())
+  id           String         @id @default(uuid())
   description  String
   unit         String
-  createdAt    DateTime        @default(now()) @db.Timestamptz()
-  updatedAt    DateTime        @updatedAt @db.Timestamptz()
+  createdAt    DateTime       @default(now()) @db.Timestamptz()
+  updatedAt    DateTime       @updatedAt @db.Timestamptz()
   PackagePrice PackagePrice[]
 
   @@map("package_ranges")
 }
 
 model PackagePrice {
-  id        String        @id @default(uuid())
+  id        String       @id @default(uuid())
   price     Int
   packageId String
   package   Package      @relation(fields: [packageId], references: [id], onDelete: Cascade)
   rangeId   String
   range     PackageRange @relation(fields: [rangeId], references: [id], onDelete: Cascade)
-  createdAt DateTime      @default(now()) @db.Timestamptz()
-  updatedAt DateTime      @updatedAt @db.Timestamptz()
+  createdAt DateTime     @default(now()) @db.Timestamptz()
+  updatedAt DateTime     @updatedAt @db.Timestamptz()
 
   @@map("package_prices")
 }
@@ -243,7 +243,7 @@ enum PackageOrderPurchaseStatus {
 }
 
 model PackageOrder {
-  id             String                      @id @default(uuid())
+  id             String                     @id @default(uuid())
   name           String
   initialPrice   Int
   finalPrice     Int?
@@ -252,20 +252,20 @@ model PackageOrder {
   user           User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
   houseId        String
   userHouse      UserHouse                  @relation(fields: [houseId], references: [id], onDelete: Cascade)
-  purchaseStatus PackageOrderPurchaseStatus  @default(PENDING_REVIEW)
+  purchaseStatus PackageOrderPurchaseStatus @default(PENDING_REVIEW)
   services       Json
-  createdAt      DateTime                    @default(now()) @db.Timestamptz()
-  updatedAt      DateTime                    @updatedAt @db.Timestamptz()
+  createdAt      DateTime                   @default(now()) @db.Timestamptz()
+  updatedAt      DateTime                   @updatedAt @db.Timestamptz()
 
   @@map("package_orders")
 }
 
 model Review {
-  id        String    @id @default(uuid())
+  id        String   @id @default(uuid())
   name      String
   rating    Int
   comment   String
-  createdAt DateTime  @default(now()) @db.Timestamptz()
+  createdAt DateTime @default(now()) @db.Timestamptz()
 
   @@map("reviews")
 }
@@ -276,7 +276,7 @@ enum ContactStatus {
 }
 
 model Contact {
-  id        String         @id @default(uuid())
+  id        String        @id @default(uuid())
   name      String
   lastname  String?
   zipcode   String?
@@ -284,17 +284,49 @@ model Contact {
   phone     String
   comments  String
   status    ContactStatus
-  createdAt DateTime       @default(now()) @db.Timestamptz()
-  updatedAt DateTime       @updatedAt @db.Timestamptz()
+  createdAt DateTime      @default(now()) @db.Timestamptz()
+  updatedAt DateTime      @updatedAt @db.Timestamptz()
 
   @@map("contacts")
 }
 
 model IndividualService {
-  id           String          @id @default(uuid())
+  id           String         @id @default(uuid())
   initialPrice Int
-  serviceId    String          @unique
+  serviceId    String         @unique
   service      PackageService @relation(fields: [serviceId], references: [id], onDelete: Cascade)
 
   @@map("individual_services")
+}
+
+enum WebQuoteRequestStatus {
+  PENDING_REVIEW
+  ATTENDED
+  CANCELLED
+}
+
+model WebQuoteRequest {
+  id       String  @id @default(uuid())
+  name     String
+  lastname String?
+  email    String
+  phone    String
+  zipcode  String?
+  comments String
+
+  packageId      String
+  packagePriceId String
+
+  packageName  String
+  initialPrice Int
+  rangeName    String
+  rangeUnit    String
+  services     Json
+
+  status    WebQuoteRequestStatus @default(PENDING_REVIEW)
+  createdAt DateTime              @default(now()) @db.Timestamptz()
+  updatedAt DateTime              @updatedAt @db.Timestamptz()
+
+  @@index([status, createdAt])
+  @@map("web_quote_requests")
 }

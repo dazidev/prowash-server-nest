@@ -12,6 +12,7 @@ import { PublicService } from './public.service';
 import { CreateContactDto } from './dto/create-contact.dto';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { ValidRoles } from 'src/auth/interfaces';
+import { CreateWebQuoteDto } from './dto/create-web-quote.dto';
 
 @Controller('public')
 export class PublicController {
@@ -43,6 +44,11 @@ export class PublicController {
   @Auth(ValidRoles.mod, ValidRoles.admin)
   deleteContact(@Param('id', ParseUUIDPipe) id: string) {
     return this.publicService.deleteContact(id);
+  }
+
+  @Post('web-quotes')
+  createWebQuote(@Body() createWebQuoteDto: CreateWebQuoteDto) {
+    return this.publicService.createWebQuote(createWebQuoteDto);
   }
 
   @Get('packages')

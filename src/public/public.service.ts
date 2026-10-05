@@ -7,6 +7,7 @@ import {
 import { Prisma } from '../generated/prisma/client/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateContactDto } from './dto/create-contact.dto';
+import { CreateWebQuoteDto } from './dto/create-web-quote.dto';
 
 const mapPackage = (r: any): object => ({
   id: r.id,
@@ -147,6 +148,90 @@ export class PublicService {
     } catch (error: unknown) {
       this.handleDBErrors(error);
     }
+  }
+
+  async createWebQuote(createWebQuoteDto: CreateWebQuoteDto) {
+    const {
+      name,
+      lastname,
+      email,
+      phone,
+      zipcode,
+      comments,
+      packageId,
+      packagePriceId,
+    } = createWebQuoteDto;
+
+    const selectedPrice = await this.prisma.packagePrice.findFirst({
+      where: {
+        id: packagePriceId,
+        packageId,
+      },
+      select: {
+        id: true,
+        price: true,
+        range: {
+          select: {
+            description: true,
+            unit: true,
+          },
+        },
+        package: {
+          select: {
+            id: true,
+            name: true,
+            ServiceOnPackage: {
+              select: {
+                serviceId: true,
+                amount: true,
+                service: {
+                  select: {
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!selectedPrice) {
+      throw new NotFoundException(
+        'The selected package or price is no longer available.',
+      );
+    }
+
+    const services = selectedPrice.package.ServiceOnPackage.map((item) => ({
+      serviceId: item.serviceId,
+      name: item.service.name,
+      amount: item.amount,
+    }));
+
+    return this.prisma.webQuoteRequest.create({
+      data: {
+        name,
+        lastname,
+        email,
+        phone,
+        zipcode,
+        comments,
+
+        packageId: selectedPrice.package.id,
+        packagePriceId: selectedPrice.id,
+
+        packageName: selectedPrice.package.name,
+        initialPrice: selectedPrice.price,
+        rangeName: selectedPrice.range.description,
+        rangeUnit: selectedPrice.range.unit,
+        services,
+      },
+      select: {
+        id: true,
+        status: true,
+        createdAt: true,
+      },
+    });
   }
 
   private handleDBErrors(error): never {
