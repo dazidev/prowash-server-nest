@@ -13,10 +13,11 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
+  const { reviews, users, admins } = initialData;
+
   await prisma.review.deleteMany();
   await prisma.user.deleteMany();
-
-  const { reviews, users } = initialData;
+  await prisma.admin.deleteMany();
 
   await prisma.review.createMany({
     data: reviews,
@@ -24,6 +25,10 @@ async function main() {
 
   await prisma.user.createMany({
     data: users,
+  });
+
+  await prisma.admin.createMany({
+    data: admins,
   });
 
   console.log('DB sync successful!');

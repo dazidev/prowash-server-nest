@@ -1,4 +1,5 @@
 import * as bcrypt from 'bcrypt';
+import { AdminRole } from 'src/generated/prisma/client/enums';
 
 interface ReviewSeed {
   name: string;
@@ -13,9 +14,14 @@ interface User {
   password: string;
 }
 
+interface Admin extends User {
+  role: AdminRole;
+}
+
 interface SeedData {
   reviews: ReviewSeed[];
   users: User[];
+  admins: Admin[];
 }
 
 export const initialData: SeedData = {
@@ -180,6 +186,15 @@ export const initialData: SeedData = {
       lastname: 'Zipa',
       email: 'danielzipa@outlook.com',
       password: bcrypt.hashSync('Daniel123asd@', 10),
+    },
+  ],
+  admins: [
+    {
+      name: 'Daniel',
+      lastname: 'Zipa',
+      email: 'danielzipa@outlook.com',
+      password: bcrypt.hashSync('Daniel123asd@', 10),
+      role: 'GENERAL_ADMIN',
     },
   ],
 };
