@@ -1,17 +1,20 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
 import { CreateUserHouseDto } from './dto/create-user-house.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Prisma } from 'src/generated/prisma/client/client';
 import { AttachPhotoHouseDto } from './dto/attach-photo-house.dto';
 import { R2Service } from 'src/infrastructure/services/r2.service';
 import { CreatePackageOrderDto } from './dto/create-package-order.dto';
+import {
+  RespondUserQuoteDto,
+  UserQuoteResponseAction,
+} from './dto/respond-user-quote.dto';
 
 @Injectable()
 export class UserService {
@@ -169,6 +172,10 @@ export class UserService {
           range: true,
           purchaseStatus: true,
           services: true,
+          appointmentAt: true,
+          appointmentTimeZone: true,
+          appointmentAcceptedAt: true,
+          appointmentVersion: true,
           createdAt: true,
           updatedAt: true,
           userHouse: {
@@ -191,24 +198,145 @@ export class UserService {
     }
   }
 
-  create(createUserDto: CreateUserDto) {
-    return 'This action adds a new user';
-  }
+  async respondUserQuote(
+    userId: string,
+    quoteId: string,
+    dto: RespondUserQuoteDto,
+  ) {
+    const select = {
+      id: true,
+      purchaseStatus: true,
+      appointmentAt: true,
+      appointmentTimeZone: true,
+      appointmentAcceptedAt: true,
+      appointmentVersion: true,
+      updatedAt: true,
+    } satisfies Prisma.PackageOrderSelect;
 
-  findAll() {
-    return `This action returns all user`;
-  }
+    return this.prisma.$transaction(async (tx) => {
+      const quote = await tx.packageOrder.findFirst({
+        where: {
+          id: quoteId,
+          userId,
+        },
+        select,
+      });
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
-  }
+      if (!quote) {
+        throw new NotFoundException('App quote request not found');
+      }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
-  }
+      if (quote.appointmentVersion !== dto.expectedAppointmentVersion) {
+        throw new ConflictException(
+          'The appointment has changed. Refresh the quote and try again.',
+        );
+      }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+      if (quote.purchaseStatus === 'CANCELLED') {
+        if (dto.action === UserQuoteResponseAction.CANCEL_QUOTE) {
+          return quote;
+        }
+
+        throw new BadRequestException('This quote has been cancelled');
+      }
+
+      let data: Prisma.PackageOrderUpdateManyMutationInput;
+
+      switch (dto.action) {
+        case UserQuoteResponseAction.ACCEPT_APPOINTMENT: {
+          const canAccept =
+            quote.purchaseStatus === 'ASSIGNED_APPOINTMENT' ||
+            quote.purchaseStatus === 'QUOTED' ||
+            quote.purchaseStatus === 'PAID';
+
+          if (
+            !canAccept ||
+            !quote.appointmentAt ||
+            !quote.appointmentTimeZone
+          ) {
+            throw new BadRequestException(
+              'There is no assigned appointment available to accept',
+            );
+          }
+
+          if (quote.appointmentAcceptedAt) {
+            return quote;
+          }
+
+          data = {
+            appointmentAcceptedAt: new Date(),
+          };
+
+          break;
+        }
+
+        case UserQuoteResponseAction.REQUEST_RESCHEDULE: {
+          if (quote.purchaseStatus === 'APPOINTMENT_RESCHEDULE_REQUESTED') {
+            return quote;
+          }
+
+          if (
+            quote.purchaseStatus !== 'ASSIGNED_APPOINTMENT' ||
+            !quote.appointmentAt ||
+            !quote.appointmentTimeZone
+          ) {
+            throw new BadRequestException(
+              'There is no assigned appointment available to reschedule',
+            );
+          }
+
+          data = {
+            purchaseStatus: 'APPOINTMENT_RESCHEDULE_REQUESTED',
+            appointmentAcceptedAt: null,
+          };
+
+          break;
+        }
+
+        case UserQuoteResponseAction.CANCEL_QUOTE: {
+          if (quote.purchaseStatus === 'PAID') {
+            throw new BadRequestException(
+              'A paid order cannot be cancelled through the quote flow',
+            );
+          }
+
+          data = {
+            purchaseStatus: 'CANCELLED',
+            appointmentAcceptedAt: null,
+          };
+
+          break;
+        }
+
+        default:
+          throw new BadRequestException('Invalid quote response action');
+      }
+
+      const result = await tx.packageOrder.updateMany({
+        where: {
+          id: quoteId,
+          userId,
+          appointmentVersion: dto.expectedAppointmentVersion,
+          purchaseStatus: quote.purchaseStatus,
+          appointmentAcceptedAt: quote.appointmentAcceptedAt,
+        },
+        data,
+      });
+
+      if (result.count !== 1) {
+        throw new ConflictException(
+          'The quote has changed. Refresh it and try again.',
+        );
+      }
+
+      return tx.packageOrder.findFirstOrThrow({
+        where: {
+          id: quoteId,
+          userId,
+        },
+        select,
+      });
+    });
   }
 
   private handleDBErrors(error): never {

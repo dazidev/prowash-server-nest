@@ -1,21 +1,27 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateMembershipDto } from './dto/create-membership.dto';
-import { UpdateMembershipDto } from './dto/update-membership.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { Prisma } from 'src/generated/prisma/client/client';
+import {
+  PackageOrderPurchaseStatus,
+  Prisma,
+} from 'src/generated/prisma/client/client';
 import {
   GetWebQuotesQueryDto,
   UpdateWebQuoteStatusDto,
 } from 'src/public/dto/web-quotes.dto';
 import {
+  AssignUserQuoteAppointmentDto,
   GetUserQuotesQueryDto,
+  SetUserQuoteFinalPriceDto,
   UpdateUserQuoteStatusDto,
 } from './dto/user-quotes.dto';
+
+const APPOINTMENT_TIME_ZONE = 'America/New_York';
 
 @Injectable()
 export class MembershipsService {
@@ -38,6 +44,10 @@ export class MembershipsService {
           range: true,
           purchaseStatus: true,
           services: true,
+          appointmentAt: true,
+          appointmentTimeZone: true,
+          appointmentAcceptedAt: true,
+          appointmentVersion: true,
           createdAt: true,
           updatedAt: true,
           user: {
@@ -69,10 +79,219 @@ export class MembershipsService {
     }
   }
 
+  async assignUserQuoteAppointment(
+    id: string,
+    dto: AssignUserQuoteAppointmentDto,
+  ) {
+    const appointmentAt = new Date(dto.appointmentAt);
+
+    if (Number.isNaN(appointmentAt.getTime())) {
+      throw new BadRequestException('Invalid appointment date');
+    }
+
+    const select = {
+      id: true,
+      purchaseStatus: true,
+      appointmentAt: true,
+      appointmentTimeZone: true,
+      appointmentAcceptedAt: true,
+      appointmentVersion: true,
+      updatedAt: true,
+    } satisfies Prisma.PackageOrderSelect;
+
+    return this.prisma.$transaction(async (tx) => {
+      const quote = await tx.packageOrder.findUnique({
+        where: { id },
+        select,
+      });
+
+      if (!quote) {
+        throw new NotFoundException('App quote request not found');
+      }
+
+      if (quote.purchaseStatus === 'CANCELLED') {
+        throw new BadRequestException(
+          'Cannot assign an appointment to a cancelled quote',
+        );
+      }
+
+      if (quote.appointmentVersion !== dto.expectedAppointmentVersion) {
+        throw new ConflictException(
+          'The appointment has changed. Refresh the quote and try again.',
+        );
+      }
+
+      const sameDate =
+        quote.appointmentAt?.getTime() === appointmentAt.getTime();
+
+      const sameTimeZone = quote.appointmentTimeZone === APPOINTMENT_TIME_ZONE;
+
+      if (
+        sameDate &&
+        quote.purchaseStatus === 'APPOINTMENT_RESCHEDULE_REQUESTED'
+      ) {
+        throw new BadRequestException(
+          'Select a different date or time to resolve the reschedule request',
+        );
+      }
+
+      if (
+        sameDate &&
+        sameTimeZone &&
+        quote.purchaseStatus !== 'PENDING_REVIEW'
+      ) {
+        return quote;
+      }
+
+      const nextStatus =
+        quote.purchaseStatus === 'QUOTED' || quote.purchaseStatus === 'PAID'
+          ? quote.purchaseStatus
+          : PackageOrderPurchaseStatus.ASSIGNED_APPOINTMENT;
+
+      const result = await tx.packageOrder.updateMany({
+        where: {
+          id,
+          appointmentVersion: dto.expectedAppointmentVersion,
+          purchaseStatus: quote.purchaseStatus,
+        },
+        data: {
+          appointmentAt,
+          appointmentTimeZone: APPOINTMENT_TIME_ZONE,
+          appointmentAcceptedAt: null,
+          appointmentVersion: {
+            increment: 1,
+          },
+          purchaseStatus: nextStatus,
+        },
+      });
+
+      if (result.count !== 1) {
+        throw new ConflictException(
+          'The quote has changed. Refresh it and try again.',
+        );
+      }
+
+      return tx.packageOrder.findUniqueOrThrow({
+        where: { id },
+        select,
+      });
+    });
+  }
+
+  async setUserQuoteFinalPrice(id: string, dto: SetUserQuoteFinalPriceDto) {
+    const select = {
+      id: true,
+      initialPrice: true,
+      finalPrice: true,
+      purchaseStatus: true,
+      appointmentAt: true,
+      appointmentTimeZone: true,
+      appointmentAcceptedAt: true,
+      appointmentVersion: true,
+      updatedAt: true,
+    } satisfies Prisma.PackageOrderSelect;
+
+    return this.prisma.$transaction(async (tx) => {
+      const quote = await tx.packageOrder.findUnique({
+        where: { id },
+        select,
+      });
+
+      if (!quote) {
+        throw new NotFoundException('App quote request not found');
+      }
+
+      if (
+        quote.purchaseStatus === 'CANCELLED' ||
+        quote.purchaseStatus === 'PAID'
+      ) {
+        throw new BadRequestException(
+          'Cannot change the final price of a cancelled or paid quote',
+        );
+      }
+
+      if (quote.purchaseStatus === 'APPOINTMENT_RESCHEDULE_REQUESTED') {
+        throw new BadRequestException(
+          'Assign a new appointment before setting the final price',
+        );
+      }
+
+      if (
+        quote.purchaseStatus !== 'ASSIGNED_APPOINTMENT' &&
+        quote.purchaseStatus !== 'QUOTED'
+      ) {
+        throw new BadRequestException(
+          'Assign an appointment before setting the final price',
+        );
+      }
+
+      if (
+        quote.purchaseStatus === 'ASSIGNED_APPOINTMENT' &&
+        (!quote.appointmentAt || !quote.appointmentTimeZone)
+      ) {
+        throw new BadRequestException(
+          'The appointment must have a date, time and timezone',
+        );
+      }
+
+      if (
+        quote.appointmentVersion !== dto.expectedAppointmentVersion ||
+        quote.finalPrice !== dto.expectedFinalPrice
+      ) {
+        throw new ConflictException(
+          'The quote has changed. Refresh it and try again.',
+        );
+      }
+
+      if (
+        quote.purchaseStatus === 'QUOTED' &&
+        quote.finalPrice === dto.finalPrice
+      ) {
+        return quote;
+      }
+
+      const result = await tx.packageOrder.updateMany({
+        where: {
+          id,
+          purchaseStatus: quote.purchaseStatus,
+          appointmentVersion: dto.expectedAppointmentVersion,
+          finalPrice: dto.expectedFinalPrice,
+        },
+        data: {
+          finalPrice: dto.finalPrice,
+          purchaseStatus: 'QUOTED',
+        },
+      });
+
+      if (result.count !== 1) {
+        throw new ConflictException(
+          'The quote has changed. Refresh it and try again.',
+        );
+      }
+
+      return tx.packageOrder.findUniqueOrThrow({
+        where: { id },
+        select,
+      });
+    });
+  }
+
   async updateUserQuoteStatus(
     id: string,
     updateUserQuoteStatusDto: UpdateUserQuoteStatusDto,
   ) {
+    const restrictedStatuses: PackageOrderPurchaseStatus[] = [
+      PackageOrderPurchaseStatus.ASSIGNED_APPOINTMENT,
+      PackageOrderPurchaseStatus.APPOINTMENT_RESCHEDULE_REQUESTED,
+      PackageOrderPurchaseStatus.QUOTED,
+    ];
+
+    if (restrictedStatuses.includes(updateUserQuoteStatusDto.purchaseStatus)) {
+      throw new BadRequestException(
+        'Use the corresponding appointment, reschedule or final price action',
+      );
+    }
+
     try {
       return await this.prisma.packageOrder.update({
         where: { id },

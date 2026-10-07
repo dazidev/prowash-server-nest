@@ -15,7 +15,9 @@ import {
   UpdateWebQuoteStatusDto,
 } from 'src/public/dto/web-quotes.dto';
 import {
+  AssignUserQuoteAppointmentDto,
   GetUserQuotesQueryDto,
+  SetUserQuoteFinalPriceDto,
   UpdateUserQuoteStatusDto,
 } from './dto/user-quotes.dto';
 
@@ -40,6 +42,24 @@ export class MembershipsController {
       id,
       updateUserQuoteStatusDto,
     );
+  }
+
+  @Patch('quotes/:id/appointment')
+  @Auth(ValidRoles.admin)
+  assignUserQuoteAppointment(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: AssignUserQuoteAppointmentDto,
+  ) {
+    return this.membershipsService.assignUserQuoteAppointment(id, dto);
+  }
+
+  @Patch('quotes/:id/final-price')
+  @Auth(ValidRoles.admin)
+  setUserQuoteFinalPrice(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: SetUserQuoteFinalPriceDto,
+  ) {
+    return this.membershipsService.setUserQuoteFinalPrice(id, dto);
   }
 
   @Get('web-quotes')

@@ -2,23 +2,21 @@ import {
   Controller,
   Get,
   Post,
-  Body,
   Patch,
+  Body,
   Param,
   Delete,
   ParseUUIDPipe,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
 import { CreateUploadSignDto } from './dto/create-upload-sign.dto';
 import { R2Service } from 'src/infrastructure/services/r2.service';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { CreateUserHouseDto } from './dto/create-user-house.dto';
 import { AttachPhotoHouseDto } from './dto/attach-photo-house.dto';
 import { GetUser } from 'src/auth/decorators';
-import { CreatePackageDto } from 'src/catalog/dto';
 import { CreatePackageOrderDto } from './dto/create-package-order.dto';
+import { RespondUserQuoteDto } from './dto/respond-user-quote.dto';
 
 @Auth()
 @Controller('user')
@@ -88,28 +86,13 @@ export class UserController {
     return this.userService.getUserQuotes(id);
   }
 
-  @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.userService.create(createUserDto);
-  }
-
-  @Get()
-  findAll() {
-    return this.userService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.userService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.userService.update(+id, updateUserDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.userService.remove(+id);
+  @Patch('quotes/:quoteId/response')
+  @Auth()
+  respondUserQuote(
+    @GetUser('id') userId: string,
+    @Param('quoteId', ParseUUIDPipe) quoteId: string,
+    @Body() dto: RespondUserQuoteDto,
+  ) {
+    return this.userService.respondUserQuote(userId, quoteId, dto);
   }
 }
