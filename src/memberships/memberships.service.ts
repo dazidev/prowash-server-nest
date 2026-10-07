@@ -2,11 +2,16 @@ import {
   BadRequestException,
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import { CreateMembershipDto } from './dto/create-membership.dto';
 import { UpdateMembershipDto } from './dto/update-membership.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Prisma } from 'src/generated/prisma/client/client';
+import {
+  GetWebQuotesQueryDto,
+  UpdateWebQuoteStatusDto,
+} from 'src/public/dto/web-quotes.dto';
 
 @Injectable()
 export class MembershipsService {
@@ -57,6 +62,52 @@ export class MembershipsService {
       return quotes;
     } catch (error: unknown) {
       this.handleDBErrors(error);
+    }
+  }
+
+  async getWebQuotes(query: GetWebQuotesQueryDto) {
+    return this.prisma.webQuoteRequest.findMany({
+      where: {
+        status: query.status,
+      },
+      orderBy: {
+        createdAt: 'asc',
+      },
+    });
+  }
+
+  async getWebQuote(id: string) {
+    const quote = await this.prisma.webQuoteRequest.findUnique({
+      where: { id },
+    });
+
+    if (!quote) {
+      throw new NotFoundException('Web quote request not found');
+    }
+
+    return quote;
+  }
+
+  async updateWebQuoteStatus(
+    id: string,
+    updateWebQuoteStatusDto: UpdateWebQuoteStatusDto,
+  ) {
+    try {
+      return await this.prisma.webQuoteRequest.update({
+        where: { id },
+        data: {
+          status: updateWebQuoteStatusDto.status,
+        },
+      });
+    } catch (error: unknown) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        throw new NotFoundException('Web quote request not found');
+      }
+
+      throw error;
     }
   }
 
