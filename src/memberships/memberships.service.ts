@@ -12,16 +12,20 @@ import {
   GetWebQuotesQueryDto,
   UpdateWebQuoteStatusDto,
 } from 'src/public/dto/web-quotes.dto';
+import {
+  GetUserQuotesQueryDto,
+  UpdateUserQuoteStatusDto,
+} from './dto/user-quotes.dto';
 
 @Injectable()
 export class MembershipsService {
   constructor(private prisma: PrismaService) {}
 
-  async getUserQuotes() {
+  async getUserQuotes(query: GetUserQuotesQueryDto) {
     try {
       const quotes = await this.prisma.packageOrder.findMany({
         where: {
-          purchaseStatus: 'PENDING_REVIEW',
+          purchaseStatus: query.purchaseStatus,
         },
         orderBy: {
           createdAt: 'asc',
@@ -62,6 +66,34 @@ export class MembershipsService {
       return quotes;
     } catch (error: unknown) {
       this.handleDBErrors(error);
+    }
+  }
+
+  async updateUserQuoteStatus(
+    id: string,
+    updateUserQuoteStatusDto: UpdateUserQuoteStatusDto,
+  ) {
+    try {
+      return await this.prisma.packageOrder.update({
+        where: { id },
+        data: {
+          purchaseStatus: updateUserQuoteStatusDto.purchaseStatus,
+        },
+        select: {
+          id: true,
+          purchaseStatus: true,
+          updatedAt: true,
+        },
+      });
+    } catch (error: unknown) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        throw new NotFoundException('App quote request not found');
+      }
+
+      throw error;
     }
   }
 

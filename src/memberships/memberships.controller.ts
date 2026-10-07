@@ -14,6 +14,10 @@ import {
   GetWebQuotesQueryDto,
   UpdateWebQuoteStatusDto,
 } from 'src/public/dto/web-quotes.dto';
+import {
+  GetUserQuotesQueryDto,
+  UpdateUserQuoteStatusDto,
+} from './dto/user-quotes.dto';
 
 @Auth(ValidRoles.admin)
 @Controller('memberships')
@@ -21,8 +25,21 @@ export class MembershipsController {
   constructor(private readonly membershipsService: MembershipsService) {}
 
   @Get('quotes')
-  getUserQuotes() {
-    return this.membershipsService.getUserQuotes();
+  @Auth(ValidRoles.admin)
+  getUserQuotes(@Query() query: GetUserQuotesQueryDto) {
+    return this.membershipsService.getUserQuotes(query);
+  }
+
+  @Patch('quotes/:id/status')
+  @Auth(ValidRoles.admin)
+  updateUserQuoteStatus(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateUserQuoteStatusDto: UpdateUserQuoteStatusDto,
+  ) {
+    return this.membershipsService.updateUserQuoteStatus(
+      id,
+      updateUserQuoteStatusDto,
+    );
   }
 
   @Get('web-quotes')
