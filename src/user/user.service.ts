@@ -4,6 +4,7 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { CreateUserHouseDto } from './dto/create-user-house.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -15,6 +16,7 @@ import {
   RespondUserQuoteDto,
   UserQuoteResponseAction,
 } from './dto/respond-user-quote.dto';
+import { RegisterPushDeviceDto } from './dto/register-push-device.dto';
 
 @Injectable()
 export class UserService {
@@ -337,6 +339,145 @@ export class UserService {
         select,
       });
     });
+  }
+
+  async registerPushDevice(
+    userId: string,
+    sessionId: string | undefined,
+    dto: RegisterPushDeviceDto,
+  ) {
+    if (!sessionId) {
+      throw new UnauthorizedException(
+        'Refresh your access token or sign in again',
+      );
+    }
+
+    const maxAttempts = 3;
+
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      try {
+        return await this.prisma.$transaction(
+          async (tx) => {
+            const session = await tx.userSession.findFirst({
+              where: {
+                id: sessionId,
+                userId,
+                isRevoked: false,
+                expiresAt: {
+                  gt: new Date(),
+                },
+                user: {
+                  status: 'ACTIVE',
+                },
+              },
+              select: {
+                id: true,
+                deviceId: true,
+                createdAt: true,
+              },
+            });
+
+            if (!session) {
+              throw new UnauthorizedException('Session expired or revoked');
+            }
+
+            const existingDevice = await tx.pushDevice.findUnique({
+              where: {
+                deviceId: session.deviceId,
+              },
+              select: {
+                sessionId: true,
+                session: {
+                  select: {
+                    createdAt: true,
+                  },
+                },
+              },
+            });
+
+            if (
+              existingDevice &&
+              existingDevice.sessionId !== session.id &&
+              existingDevice.session.createdAt > session.createdAt
+            ) {
+              throw new ConflictException(
+                'A newer session already registered this device',
+              );
+            }
+
+            const data = {
+              deviceId: session.deviceId,
+              fcmToken: dto.fcmToken,
+              platform: dto.platform,
+              userId,
+              sessionId: session.id,
+              isActive: true,
+              lastSeenAt: new Date(),
+            };
+
+            return tx.pushDevice.upsert({
+              where: {
+                deviceId: session.deviceId,
+              },
+              create: data,
+              update: data,
+              select: {
+                id: true,
+                deviceId: true,
+                platform: true,
+                isActive: true,
+                lastSeenAt: true,
+                updatedAt: true,
+              },
+            });
+          },
+          {
+            isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+          },
+        );
+      } catch (error: unknown) {
+        const retryable =
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          (error.code === 'P2034' || error.code === 'P2002');
+
+        if (retryable && attempt < maxAttempts - 1) {
+          continue;
+        }
+
+        if (retryable) {
+          throw new ConflictException(
+            'Unable to register the device. Please try again.',
+          );
+        }
+
+        throw error;
+      }
+    }
+
+    throw new ConflictException('Unable to register the device');
+  }
+
+  async deactivatePushDevice(userId: string, sessionId: string | undefined) {
+    if (!sessionId) {
+      throw new UnauthorizedException(
+        'Refresh your access token or sign in again',
+      );
+    }
+
+    await this.prisma.pushDevice.updateMany({
+      where: {
+        userId,
+        sessionId,
+        isActive: true,
+      },
+      data: {
+        isActive: false,
+      },
+    });
+
+    return {
+      deactivated: true,
+    };
   }
 
   private handleDBErrors(error): never {

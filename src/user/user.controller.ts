@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   ParseUUIDPipe,
+  HttpCode,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUploadSignDto } from './dto/create-upload-sign.dto';
@@ -17,6 +18,7 @@ import { AttachPhotoHouseDto } from './dto/attach-photo-house.dto';
 import { GetUser } from 'src/auth/decorators';
 import { CreatePackageOrderDto } from './dto/create-package-order.dto';
 import { RespondUserQuoteDto } from './dto/respond-user-quote.dto';
+import { RegisterPushDeviceDto } from './dto/register-push-device.dto';
 
 @Auth()
 @Controller('user')
@@ -25,6 +27,24 @@ export class UserController {
     private readonly userService: UserService,
     private readonly r2Service: R2Service,
   ) {}
+
+  @Post('push-device')
+  @HttpCode(200)
+  registerPushDevice(
+    @GetUser('id') userId: string,
+    @GetUser('sessionId') sessionId: string | undefined,
+    @Body() dto: RegisterPushDeviceDto,
+  ) {
+    return this.userService.registerPushDevice(userId, sessionId, dto);
+  }
+
+  @Delete('push-device')
+  deactivatePushDevice(
+    @GetUser('id') userId: string,
+    @GetUser('sessionId') sessionId: string | undefined,
+  ) {
+    return this.userService.deactivatePushDevice(userId, sessionId);
+  }
 
   @Get('houses')
   getUserHouses(@GetUser('id') id: string) {

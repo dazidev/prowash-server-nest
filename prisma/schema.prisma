@@ -21,24 +21,26 @@ enum UserStatus {
 }
 
 model User {
-  id                     String                    @id @default(uuid())
+  id                     String                     @id @default(uuid())
   name                   String
   lastname               String
-  email                  String                    @unique
+  email                  String                     @unique
   password               String
-  phoneNumber            String?                   @db.VarChar(20)
-  isEmailVerified        Boolean                   @default(false)
-  isPhoneNumberVerified  Boolean                   @default(false)
+  phoneNumber            String?                    @db.VarChar(20)
+  isEmailVerified        Boolean                    @default(false)
+  isPhoneNumberVerified  Boolean                    @default(false)
   roles                  UserRole[]
-  status                 UserStatus                @default(ACTIVE)
-  lastLogin              DateTime?                 @db.Timestamptz()
-  createdAt              DateTime                  @default(now()) @db.Timestamptz()
-  updatedAt              DateTime                  @updatedAt @db.Timestamptz()
+  status                 UserStatus                 @default(ACTIVE)
+  lastLogin              DateTime?                  @db.Timestamptz()
+  createdAt              DateTime                   @default(now()) @db.Timestamptz()
+  updatedAt              DateTime                   @updatedAt @db.Timestamptz()
 
   EmailVerificationCodes EmailVerificationCodes[]
   UserHouse              UserHouse[]
   userSessions           UserSession[]
   packageOrders          PackageOrder[]
+  pushDevices            PushDevice[]
+  quoteNotifications     QuoteNotificationOutbox[]
 
   @@index([status])
   @@index([roles])
@@ -46,25 +48,55 @@ model User {
 }
 
 model UserSession {
-  id            String     @id @default(uuid())
+  id            String       @id @default(uuid())
   refreshToken  String
-  expiresAt     DateTime   @db.Timestamptz()
-  isRevoked     Boolean    @default(false)
-  revokedAt     DateTime?  @db.Timestamptz()
+  expiresAt     DateTime     @db.Timestamptz()
+  isRevoked     Boolean      @default(false)
+  revokedAt     DateTime?    @db.Timestamptz()
   revokedReason String?
   deviceId      String
   deviceInfo    String
   ipAddress     String
-  createdAt     DateTime   @default(now()) @db.Timestamptz()
-  updatedAt     DateTime   @updatedAt @db.Timestamptz()
+  createdAt     DateTime     @default(now()) @db.Timestamptz()
+  updatedAt     DateTime     @updatedAt @db.Timestamptz()
   userId        String
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pushDevice    PushDevice?
 
   @@index([refreshToken])
   @@index([userId, isRevoked])
   @@index([userId, id])
   @@index([isRevoked, expiresAt])
   @@map("user_sessions")
+}
+
+//* MODELO PARA LAS NOTIFICACIONES
+
+enum PushDevicePlatform {
+  ANDROID
+  IOS
+}
+
+model PushDevice {
+  id         String              @id @default(uuid())
+  deviceId   String              @unique
+  fcmToken   String              @unique @db.VarChar(2048)
+  platform   PushDevicePlatform
+  isActive   Boolean             @default(true)
+
+  userId     String
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  sessionId  String              @unique
+  session    UserSession        @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  lastSeenAt DateTime            @default(now()) @db.Timestamptz()
+  createdAt  DateTime            @default(now()) @db.Timestamptz()
+  updatedAt  DateTime            @updatedAt @db.Timestamptz()
+
+  @@index([userId, isActive])
+  @@index([lastSeenAt])
+  @@map("push_devices")
 }
 
 //* MODELOS PARA LOS CÓDIGOS A LOS CORREOS ELECTRONICOS
@@ -248,6 +280,7 @@ model PackageOrder {
   name                  String
   initialPrice          Int
   finalPrice            Int?
+  finalPriceVersion     Int                         @default(0)
   range                 Int
   userId                String
   user                  User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -260,6 +293,8 @@ model PackageOrder {
   appointmentTimeZone   String?
   appointmentAcceptedAt DateTime?                   @db.Timestamptz()
   appointmentVersion    Int                         @default(0)
+
+  quoteNotifications    QuoteNotificationOutbox[]
 
   createdAt             DateTime                    @default(now()) @db.Timestamptz()
   updatedAt             DateTime                    @updatedAt @db.Timestamptz()
@@ -336,4 +371,53 @@ model WebQuoteRequest {
 
   @@index([status, createdAt])
   @@map("web_quote_requests")
+}
+
+enum QuoteNotificationType {
+  APPOINTMENT_ASSIGNED
+  FINAL_PRICE_ASSIGNED
+}
+
+enum QuoteNotificationStatus {
+  PENDING
+  PROCESSING
+  SENT
+  SKIPPED
+  FAILED
+}
+
+model QuoteNotificationOutbox {
+  id                 String                   @id @default(uuid())
+  type               QuoteNotificationType
+  status             QuoteNotificationStatus  @default(PENDING)
+  version            Int
+
+  userId             String
+  user               User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  quoteId            String
+  quote              PackageOrder            @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  appointmentAt      DateTime?                @db.Timestamptz()
+  finalPrice         Int?
+
+  attempts           Int                      @default(0)
+  availableAt        DateTime                 @default(now()) @db.Timestamptz()
+
+  lockToken          String?
+  lockedUntil        DateTime?                @db.Timestamptz()
+
+  completedDeviceIds String[]                 @default([])
+
+  lastError          String?                  @db.VarChar(256)
+  completedAt        DateTime?                @db.Timestamptz()
+
+  createdAt          DateTime                 @default(now()) @db.Timestamptz()
+  updatedAt          DateTime                 @updatedAt @db.Timestamptz()
+
+  @@unique([quoteId, type, version])
+  @@index([userId])
+  @@index([status,   availableAt])
+  @@index([status,   lockedUntil])
+  @@map("quote_notification_outbox")
 }

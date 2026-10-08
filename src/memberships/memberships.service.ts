@@ -20,12 +20,16 @@ import {
   SetUserQuoteFinalPriceDto,
   UpdateUserQuoteStatusDto,
 } from './dto/user-quotes.dto';
+import { QuoteNotificationOutboxService } from 'src/notifications/quote-notification-outbox.service';
 
 const APPOINTMENT_TIME_ZONE = 'America/New_York';
 
 @Injectable()
 export class MembershipsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly quoteNotificationOutbox: QuoteNotificationOutboxService,
+  ) {}
 
   async getUserQuotes(query: GetUserQuotesQueryDto) {
     try {
@@ -171,10 +175,24 @@ export class MembershipsService {
         );
       }
 
-      return tx.packageOrder.findUniqueOrThrow({
+      const updatedQuote = await tx.packageOrder.findUniqueOrThrow({
         where: { id },
-        select,
+        select: {
+          ...select,
+          userId: true,
+        },
       });
+
+      const { userId, ...response } = updatedQuote;
+
+      await this.quoteNotificationOutbox.enqueueAppointment(tx, {
+        id: response.id,
+        userId,
+        appointmentAt: response.appointmentAt,
+        appointmentVersion: response.appointmentVersion,
+      });
+
+      return response;
     });
   }
 
@@ -192,14 +210,20 @@ export class MembershipsService {
     } satisfies Prisma.PackageOrderSelect;
 
     return this.prisma.$transaction(async (tx) => {
-      const quote = await tx.packageOrder.findUnique({
+      const storedQuote = await tx.packageOrder.findUnique({
         where: { id },
-        select,
+        select: {
+          ...select,
+          finalPriceVersion: true,
+        },
       });
 
-      if (!quote) {
+      if (!storedQuote) {
         throw new NotFoundException('App quote request not found');
       }
+
+      const { finalPriceVersion: currentFinalPriceVersion, ...quote } =
+        storedQuote;
 
       if (
         quote.purchaseStatus === 'CANCELLED' ||
@@ -256,9 +280,13 @@ export class MembershipsService {
           purchaseStatus: quote.purchaseStatus,
           appointmentVersion: dto.expectedAppointmentVersion,
           finalPrice: dto.expectedFinalPrice,
+          finalPriceVersion: currentFinalPriceVersion,
         },
         data: {
           finalPrice: dto.finalPrice,
+          finalPriceVersion: {
+            increment: 1,
+          },
           purchaseStatus: 'QUOTED',
         },
       });
@@ -269,10 +297,25 @@ export class MembershipsService {
         );
       }
 
-      return tx.packageOrder.findUniqueOrThrow({
+      const updatedQuote = await tx.packageOrder.findUniqueOrThrow({
         where: { id },
-        select,
+        select: {
+          ...select,
+          userId: true,
+          finalPriceVersion: true,
+        },
       });
+
+      const { userId, finalPriceVersion, ...response } = updatedQuote;
+
+      await this.quoteNotificationOutbox.enqueueFinalPrice(tx, {
+        id: response.id,
+        userId,
+        finalPrice: response.finalPrice,
+        finalPriceVersion,
+      });
+
+      return response;
     });
   }
 

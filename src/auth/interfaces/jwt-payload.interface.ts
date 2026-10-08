@@ -1,5 +1,6 @@
 export interface JwtAccessPayload {
   id: string;
+  sessionId?: string;
 }
 
 export interface JwtRefreshPayload {

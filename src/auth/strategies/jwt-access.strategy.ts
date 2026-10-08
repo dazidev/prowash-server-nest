@@ -23,16 +23,51 @@ export class JwtAccessStrategy extends PassportStrategy(
   }
 
   async validate(payload: JwtAccessPayload): Promise<User> {
-    //! TODO: wrap in a try cath
-    const { id } = payload;
-    const user = await this.prisma.user.findUnique({ where: { id } });
+    const { id, sessionId } = payload;
 
-    if (!user) throw new UnauthorizedException('Token not valid');
-    if (user.status !== 'ACTIVE')
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('Token not valid');
+    }
+
+    if (user.status !== 'ACTIVE') {
       throw new UnauthorizedException('User not active');
+    }
 
     const { password, ...result } = user;
 
-    return result;
+    if (sessionId === undefined) {
+      return result;
+    }
+
+    if (typeof sessionId !== 'string' || !sessionId) {
+      throw new UnauthorizedException('Session not valid');
+    }
+
+    const session = await this.prisma.userSession.findFirst({
+      where: {
+        id: sessionId,
+        userId: user.id,
+        isRevoked: false,
+        expiresAt: {
+          gt: new Date(),
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!session) {
+      throw new UnauthorizedException('Session expired or revoked');
+    }
+
+    return {
+      ...result,
+      sessionId: session.id,
+    };
   }
 }

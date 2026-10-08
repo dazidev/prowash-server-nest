@@ -10,7 +10,7 @@ import { UpdateAuthDto } from './dto/update-auth.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 import path from 'path';
-import fs from "fs";
+import fs from 'fs';
 import * as bcrypt from 'bcrypt';
 import { JwtAccessPayload, JwtRefreshPayload, User } from './interfaces';
 import { RefreshWebDto } from './dto/refresh-web.dto';
@@ -19,7 +19,6 @@ import { encryptToString } from 'src/common';
 import { BrevoService } from 'src/infrastructure/services/brevo.service';
 import { VerifyEmailCodeDto } from './dto/verify-email-code.dto';
 import { getTemplatePath } from 'src/common/helpers/get-template-path.helper';
-
 
 @Injectable()
 export class AuthService {
@@ -101,6 +100,7 @@ export class AuthService {
 
       const accessToken = this.generateJwtAccessToken({
         id: user.id,
+        sessionId: session.id,
       });
 
       return {
@@ -126,8 +126,8 @@ export class AuthService {
       },
       expiresIn: {
         access: data.accessTokenExpiresIn,
-        refresh: data.refreshTokenExpiresIn
-      }
+        refresh: data.refreshTokenExpiresIn,
+      },
     };
   }
 
@@ -140,13 +140,13 @@ export class AuthService {
 
     const templatePath = getTemplatePath('auth-email.template.html');
 
-    let html = fs.readFileSync(templatePath, "utf8");
+    let html = fs.readFileSync(templatePath, 'utf8');
     const code = Math.floor(1000 + Math.random() * 9000)
       .toString()
       .slice(0, 4);
     html = html
-      .replace("{{name}}", `${name} ${lastname}`)
-      .replace("{{code}}", code);
+      .replace('{{name}}', `${name} ${lastname}`)
+      .replace('{{code}}', code);
 
     const hashedCode = encryptToString(code);
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
@@ -157,14 +157,14 @@ export class AuthService {
           userId: id,
           hashedCode,
           expiresAt,
-          purpose: "EMAIL_VERIFY",
-          status: "PENDING",
-        }
-      })
+          purpose: 'EMAIL_VERIFY',
+          status: 'PENDING',
+        },
+      });
 
-      if (!code) throw new Error("Code not sent")
+      if (!code) throw new Error('Code not sent');
 
-      await this.brevoService.sendEmail(email, "Verification code", html)
+      await this.brevoService.sendEmail(email, 'Verification code', html);
 
       return;
     } catch (error) {
@@ -183,33 +183,33 @@ export class AuthService {
           userId_hashedCode_purpose: {
             userId: id,
             hashedCode,
-            purpose: "EMAIL_VERIFY"
-          }
-        }
-      })
+            purpose: 'EMAIL_VERIFY',
+          },
+        },
+      });
 
-      if (!storeCode) throw new Error("Code not found")
-      
+      if (!storeCode) throw new Error('Code not found');
+
       const nowDate = Date.now();
 
       const diffInMinutes =
         (nowDate - new Date(storeCode.expiresAt).getTime()) / 1000 / 60;
-      if (diffInMinutes >= 0) throw new Error("Code expired");
+      if (diffInMinutes >= 0) throw new Error('Code expired');
 
       await this.prisma.emailVerificationCodes.update({
         data: {
           consumedAt: new Date(nowDate),
-          status: "USED",
+          status: 'USED',
         },
-        where: { id: storeCode.id }
-      })
+        where: { id: storeCode.id },
+      });
 
       await this.prisma.user.update({
         where: { id },
         data: {
           isEmailVerified: true,
-        }
-      })
+        },
+      });
 
       return;
     } catch (error) {
@@ -271,7 +271,10 @@ export class AuthService {
 
       return {
         user: { ...result },
-        accessToken: this.generateJwtAccessToken({ id: user.id }),
+        accessToken: this.generateJwtAccessToken({
+          id: user.id,
+          sessionId: session.id,
+        }),
         refreshToken,
         accessTokenExpiresIn,
         refreshTokenExpiresIn,
@@ -282,7 +285,7 @@ export class AuthService {
     }
   }
 
-  async logout(user: User, sessionId: string) {
+  private async logout(user: User, sessionId: string) {
     try {
       const session = await this.prisma.userSession.findUnique({
         where: { id: sessionId },
@@ -292,14 +295,28 @@ export class AuthService {
       if (session.userId !== user.id) throw new Error('unauthorized session');
       if (session.isRevoked) return;
 
-      await this.prisma.userSession.update({
-        where: { id: sessionId },
-        data: {
-          isRevoked: true,
-          revokedAt: new Date(),
-          revokedReason: 'logout',
-        },
-      });
+      await this.prisma.$transaction([
+        this.prisma.userSession.update({
+          where: {
+            id: sessionId,
+          },
+          data: {
+            isRevoked: true,
+            revokedAt: new Date(),
+            revokedReason: 'logout',
+          },
+        }),
+
+        this.prisma.pushDevice.updateMany({
+          where: {
+            userId: user.id,
+            sessionId,
+          },
+          data: {
+            isActive: false,
+          },
+        }),
+      ]);
     } catch (error) {
       this.handleDBErrors(error);
     }
