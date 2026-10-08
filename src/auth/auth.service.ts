@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   InternalServerErrorException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -19,6 +20,8 @@ import { encryptToString } from 'src/common';
 import { BrevoService } from 'src/infrastructure/services/brevo.service';
 import { VerifyEmailCodeDto } from './dto/verify-email-code.dto';
 import { getTemplatePath } from 'src/common/helpers/get-template-path.helper';
+import { hashRefreshToken } from './helpers/refresh-token.helper';
+import { randomUUID } from 'node:crypto';
 
 @Injectable()
 export class AuthService {
@@ -76,31 +79,44 @@ export class AuthService {
   ) {
     try {
       const accessTokenExpiresIn =
-        parseInt(this.configService.get('TIME_ACCESS_TOKEN') ?? '20m') * 60; // SECONDS
+        parseInt(this.configService.get('TIME_ACCESS_TOKEN') ?? '20m') * 60;
 
       const refreshTokenExpiresIn =
         parseInt(this.configService.get('TIME_REFRESH_TOKEN') ?? '7d') *
         60 *
         60 *
-        24; // SECONDS
+        24;
 
       const expiresAt = new Date(Date.now() + 1000 * refreshTokenExpiresIn);
 
       const refreshToken = this.generateJwtRefreshToken({
         userId: user.id,
-        sessionId: sessionId,
+        sessionId,
       });
 
-      const session = await this.prisma.userSession.update({
-        data: { refreshToken: bcrypt.hashSync(refreshToken, 10), expiresAt },
-        where: { id: sessionId },
+      const result = await this.prisma.userSession.updateMany({
+        where: {
+          id: sessionId,
+          userId: user.id,
+          refreshToken: hashRefreshToken(refreshWebDto.refreshToken),
+          isRevoked: false,
+          expiresAt: { gt: new Date() },
+        },
+        data: {
+          refreshToken: hashRefreshToken(refreshToken),
+          expiresAt,
+        },
       });
 
-      if (!session) throw new Error('session not updated');
+      if (result.count !== 1) {
+        throw new UnauthorizedException(
+          'Session expired, revoked or already refreshed',
+        );
+      }
 
       const accessToken = this.generateJwtAccessToken({
         id: user.id,
-        sessionId: session.id,
+        sessionId,
       });
 
       return {
@@ -109,7 +125,11 @@ export class AuthService {
         accessTokenExpiresIn,
         refreshTokenExpiresIn,
       };
-    } catch (error) {
+    } catch (error: unknown) {
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+
       this.handleDBErrors(error);
     }
   }
@@ -261,7 +281,7 @@ export class AuthService {
       const refreshToken = this.generateJwtRefreshToken(payload);
 
       const session = await this.prisma.userSession.update({
-        data: { refreshToken: bcrypt.hashSync(refreshToken, 10) },
+        data: { refreshToken: hashRefreshToken(refreshToken) },
         where: { id: initialSession.id },
       });
 
@@ -328,11 +348,11 @@ export class AuthService {
   }
 
   private generateJwtRefreshToken(payload: JwtRefreshPayload) {
-    const token = this.jwtService.sign(payload, {
+    return this.jwtService.sign(payload, {
       secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
       expiresIn: this.configService.get('TIME_REFRESH_TOKEN') ?? '7d',
+      jwtid: randomUUID(),
     });
-    return token;
   }
 
   private handleDBErrors(error: unknown): never {

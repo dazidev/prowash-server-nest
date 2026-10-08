@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { Request } from 'express';
-import * as bcrypt from 'bcrypt';
+import { matchesRefreshToken } from '../helpers/refresh-token.helper';
 
 import { AuthStrategy, JwtRefreshPayload, User } from '../interfaces';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -20,7 +20,7 @@ export class JwtRefreshStrategy extends PassportStrategy(
   ) {
     super({
       secretOrKey: configService.get('JWT_REFRESH_SECRET')!,
-      ignoreExpiration: true,
+      ignoreExpiration: false,
       jwtFromRequest: ExtractJwt.fromExtractors([
         (req) => req?.body?.refreshToken,
       ]),
@@ -53,8 +53,9 @@ export class JwtRefreshStrategy extends PassportStrategy(
     if (session.expiresAt < new Date())
       throw new UnauthorizedException('Token not valid (2)');
 
-    if (!bcrypt.compareSync(refreshToken, session.refreshToken))
+    if (!matchesRefreshToken(refreshToken, session.refreshToken)) {
       throw new UnauthorizedException('Token not valid (3)');
+    }
 
     const { password, ...result } = user;
 
