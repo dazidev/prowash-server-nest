@@ -15,4 +15,5 @@ export interface QuotePushResult {
   retryDeviceIds: string[];
   invalidDeviceIds: string[];
   skippedDeviceIds: string[];
+  hasPermanentFailure: boolean;
 }

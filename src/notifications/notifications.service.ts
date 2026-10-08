@@ -19,6 +19,21 @@ const INVALID_TOKEN_CODES = new Set([
   'messaging/registration-token-not-registered',
 ]);
 
+const PERMANENT_FCM_CODES = new Set([
+  'messaging/invalid-argument',
+  'messaging/invalid-recipient',
+  'messaging/invalid-payload',
+  'messaging/invalid-data-payload-key',
+  'messaging/payload-size-limit-exceeded',
+  'messaging/invalid-options',
+  'messaging/invalid-package-name',
+  'messaging/mismatched-credential',
+  'messaging/authentication-error',
+  'messaging/third-party-auth-error',
+  'app/invalid-credential',
+  'app/invalid-app-options',
+]);
+
 const QUOTE_NOTIFICATIONS: Record<
   QuotePushType,
   { title: string; body: string }
@@ -45,12 +60,14 @@ export class NotificationsService {
   async sendQuoteNotification(
     message: QuotePushMessage,
     excludedDeviceIds: string[] = [],
+    canSendBatch?: () => Promise<boolean>,
   ): Promise<QuotePushResult> {
     const result: QuotePushResult = {
       acceptedDeviceIds: [],
       retryDeviceIds: [],
       invalidDeviceIds: [],
       skippedDeviceIds: [],
+      hasPermanentFailure: false,
     };
 
     const quoteWhere: Prisma.PackageOrderWhereInput = {
@@ -104,6 +121,14 @@ export class NotificationsService {
     });
 
     for (let offset = 0; offset < candidates.length; offset += MAX_BATCH_SIZE) {
+      if (result.hasPermanentFailure) {
+        break;
+      }
+
+      if (canSendBatch && !(await canSendBatch())) {
+        break;
+      }
+
       const candidateIds = candidates
         .slice(offset, offset + MAX_BATCH_SIZE)
         .map((device) => device.id);
@@ -153,6 +178,12 @@ export class NotificationsService {
               android: {
                 priority: 'high',
                 notification: {
+                  channelId: 'prowash_quotes',
+                  icon: 'ic_stat_prowash',
+                  color: '#0D47A1',
+                  priority: 'high',
+                  defaultSound: true,
+                  defaultVibrateTimings: true,
                   tag: message.eventId,
                 },
               },
@@ -160,7 +191,17 @@ export class NotificationsService {
           ),
         );
       } catch (error: unknown) {
-        this.logger.warn(`FCM batch failed: ${this.getErrorCode(error)}`);
+        const errorCode = this.getErrorCode(error);
+
+        this.logger.warn(`FCM batch failed: ${errorCode}`);
+
+        if (
+          PERMANENT_FCM_CODES.has(errorCode) ||
+          INVALID_TOKEN_CODES.has(errorCode)
+        ) {
+          result.hasPermanentFailure = true;
+          break;
+        }
 
         result.retryDeviceIds.push(...devices.map((device) => device.id));
 
@@ -200,6 +241,12 @@ export class NotificationsService {
             result.retryDeviceIds.push(device.id);
           }
 
+          continue;
+        }
+
+        if (PERMANENT_FCM_CODES.has(errorCode)) {
+          this.logger.warn(`Permanent FCM failure: ${errorCode}`);
+          result.hasPermanentFailure = true;
           continue;
         }
 
