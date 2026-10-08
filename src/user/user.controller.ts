@@ -74,10 +74,15 @@ export class UserController {
 
   @Post('house/:houseId/photo-attach')
   attachPhotoUserHouse(
+    @GetUser('id') userId: string,
     @Param('houseId', ParseUUIDPipe) houseId: string,
     @Body() attachPhotoHouseDto: AttachPhotoHouseDto,
   ) {
-    return this.userService.attachPhotoUserHouse(houseId, attachPhotoHouseDto);
+    return this.userService.attachPhotoUserHouse(
+      userId,
+      houseId,
+      attachPhotoHouseDto,
+    );
   }
 
   @Delete('house/:houseId')

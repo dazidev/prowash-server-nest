@@ -64,29 +64,45 @@ export class UserService {
   }
 
   async attachPhotoUserHouse(
+    userId: string,
     houseId: string,
     attachPhotoHouseDto: AttachPhotoHouseDto,
   ) {
     try {
+      const house = await this.prisma.userHouse.findUnique({
+        where: { id: houseId, userId },
+        select: { id: true },
+      });
+
+      if (!house) {
+        throw new NotFoundException('House not found');
+      }
+
       const { key } = attachPhotoHouseDto;
+      const keyPrefix = `houses/images/${userId}/`;
+
+      if (!key.startsWith(keyPrefix) || key.length === keyPrefix.length) {
+        throw new BadRequestException('Invalid image key');
+      }
+
       await this.r2Service.validateObjectExists(key);
 
-      const exists = await this.prisma.userHouse.findUnique({
-        where: { id: houseId },
+      const result = await this.prisma.userHouse.updateMany({
+        where: { id: houseId, userId },
+        data: { imageUrl: key },
       });
 
-      if (!exists) throw new NotFoundException('House not found');
-
-      const imageUrl = `${key}`;
-
-      await this.prisma.userHouse.update({
-        data: {
-          imageUrl,
-        },
-        where: { id: houseId },
-      });
-      return;
+      if (result.count !== 1) {
+        throw new NotFoundException('House not found');
+      }
     } catch (error: unknown) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      ) {
+        throw error;
+      }
+
       this.handleDBErrors(error);
     }
   }
