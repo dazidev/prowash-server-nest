@@ -19,6 +19,15 @@ export class GetUserQuotesQueryDto {
 export class UpdateUserQuoteStatusDto {
   @IsEnum(PackageOrderPurchaseStatus)
   readonly purchaseStatus!: PackageOrderPurchaseStatus;
+
+  @IsEnum(PackageOrderPurchaseStatus)
+  readonly expectedPurchaseStatus!: PackageOrderPurchaseStatus;
+
+  @IsISO8601({ strict: true, strictSeparator: true })
+  @Matches(/T.*(?:Z|[+-]\d{2}:\d{2})$/, {
+    message: 'expectedUpdatedAt must include a time and timezone offset',
+  })
+  readonly expectedUpdatedAt!: string;
 }
 
 export class AssignUserQuoteAppointmentDto {

@@ -319,44 +319,115 @@ export class MembershipsService {
     });
   }
 
-  async updateUserQuoteStatus(
-    id: string,
-    updateUserQuoteStatusDto: UpdateUserQuoteStatusDto,
-  ) {
+  async updateUserQuoteStatus(id: string, dto: UpdateUserQuoteStatusDto) {
     const restrictedStatuses: PackageOrderPurchaseStatus[] = [
       PackageOrderPurchaseStatus.ASSIGNED_APPOINTMENT,
       PackageOrderPurchaseStatus.APPOINTMENT_RESCHEDULE_REQUESTED,
       PackageOrderPurchaseStatus.QUOTED,
     ];
 
-    if (restrictedStatuses.includes(updateUserQuoteStatusDto.purchaseStatus)) {
+    if (restrictedStatuses.includes(dto.purchaseStatus)) {
       throw new BadRequestException(
         'Use the corresponding appointment, reschedule or final price action',
       );
     }
 
-    try {
-      return await this.prisma.packageOrder.update({
+    const expectedUpdatedAt = new Date(dto.expectedUpdatedAt);
+
+    if (Number.isNaN(expectedUpdatedAt.getTime())) {
+      throw new BadRequestException('Invalid expected update date');
+    }
+
+    const transitions: Record<
+      PackageOrderPurchaseStatus,
+      PackageOrderPurchaseStatus[]
+    > = {
+      PENDING_REVIEW: ['CANCELLED'],
+      ASSIGNED_APPOINTMENT: ['CANCELLED'],
+      APPOINTMENT_RESCHEDULE_REQUESTED: ['CANCELLED'],
+      QUOTED: ['PAID', 'CANCELLED'],
+      PAID: [],
+      CANCELLED: [],
+    };
+
+    const select = {
+      id: true,
+      purchaseStatus: true,
+      updatedAt: true,
+    } satisfies Prisma.PackageOrderSelect;
+
+    return this.prisma.$transaction(async (tx) => {
+      const quote = await tx.packageOrder.findUnique({
         where: { id },
-        data: {
-          purchaseStatus: updateUserQuoteStatusDto.purchaseStatus,
-        },
         select: {
-          id: true,
-          purchaseStatus: true,
-          updatedAt: true,
+          ...select,
+          finalPrice: true,
+          finalPriceVersion: true,
+          appointmentVersion: true,
+          appointmentAcceptedAt: true,
         },
       });
-    } catch (error: unknown) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2025'
-      ) {
+
+      if (!quote) {
         throw new NotFoundException('App quote request not found');
       }
 
-      throw error;
-    }
+      if (
+        quote.purchaseStatus !== dto.expectedPurchaseStatus ||
+        quote.updatedAt.getTime() !== expectedUpdatedAt.getTime()
+      ) {
+        throw new ConflictException(
+          'The quote has changed. Refresh it and try again.',
+        );
+      }
+
+      if (quote.purchaseStatus === dto.purchaseStatus) {
+        return {
+          id: quote.id,
+          purchaseStatus: quote.purchaseStatus,
+          updatedAt: quote.updatedAt,
+        };
+      }
+
+      if (!transitions[quote.purchaseStatus].includes(dto.purchaseStatus)) {
+        throw new BadRequestException('Invalid quote status transition');
+      }
+
+      if (dto.purchaseStatus === 'PAID' && quote.finalPrice === null) {
+        throw new BadRequestException(
+          'Set the final price before marking the quote as paid',
+        );
+      }
+
+      const result = await tx.packageOrder.updateMany({
+        where: {
+          id,
+          purchaseStatus: quote.purchaseStatus,
+          updatedAt: quote.updatedAt,
+          finalPrice: quote.finalPrice,
+          finalPriceVersion: quote.finalPriceVersion,
+          appointmentVersion: quote.appointmentVersion,
+          appointmentAcceptedAt: quote.appointmentAcceptedAt,
+        },
+        data: {
+          purchaseStatus: dto.purchaseStatus,
+          ...(dto.purchaseStatus === 'CANCELLED'
+            ? { appointmentAcceptedAt: null }
+            : {}),
+        },
+      });
+
+      if (result.count !== 1) {
+        throw new ConflictException(
+          'The quote has changed. Refresh it and try again.',
+        );
+      }
+
+      return tx.packageOrder.findUniqueOrThrow({
+        where: { id },
+        select,
+      });
+    });
   }
 
   async getWebQuotes(query: GetWebQuotesQueryDto) {
