@@ -174,4 +174,75 @@ export class R2Service {
       throw new InternalServerErrorException('ERROR_DELETING_OBJECTS');
     }
   }
+
+  async createAdvertisingUploadUrl({
+    advertisingId,
+    mime,
+    ext,
+    size,
+  }: {
+    advertisingId: string;
+    mime: string;
+    ext: string;
+    size: number;
+  }) {
+    const extensions: Record<string, string[]> = {
+      'image/jpeg': ['jpg', 'jpeg'],
+      'image/jpg': ['jpg', 'jpeg'],
+      'image/png': ['png'],
+      'image/webp': ['webp'],
+    };
+
+    if (!extensions[mime]?.includes(ext)) {
+      throw new BadRequestException('INVALID_IMAGE_FORMAT');
+    }
+
+    if (!Number.isInteger(size) || size < 1 || size > this.maxUploadBytes) {
+      throw new BadRequestException('INVALID_SIZE');
+    }
+
+    const key = `advertising/images/${advertisingId}/${Date.now()}-${randomUUID()}.${ext}`;
+
+    const command = new PutObjectCommand({
+      Bucket: this.bucket,
+      Key: key,
+      ContentType: mime,
+    });
+
+    try {
+      const uploadUrl = await getSignedUrl(this.r2, command, {
+        expiresIn: 600,
+      });
+
+      return { uploadUrl, key };
+    } catch {
+      throw new InternalServerErrorException('Error generating upload URL');
+    }
+  }
+
+  async validateAdvertisingImage(key: string): Promise<void> {
+    const metadata = await this.r2
+      .send(new HeadObjectCommand({ Bucket: this.bucket, Key: key }))
+      .catch((error: unknown) => {
+        const status = (error as { $metadata?: { httpStatusCode?: number } })
+          ?.$metadata?.httpStatusCode;
+
+        if (status === 404) {
+          throw new NotFoundException('Image not found in R2');
+        }
+
+        throw new InternalServerErrorException('Unable to verify image in R2');
+      });
+
+    const allowedMimes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    const size = metadata.ContentLength ?? 0;
+
+    if (!allowedMimes.includes(metadata.ContentType ?? '')) {
+      throw new BadRequestException('INVALID_MIME');
+    }
+
+    if (size < 1 || size > this.maxUploadBytes) {
+      throw new BadRequestException('INVALID_SIZE');
+    }
+  }
 }
